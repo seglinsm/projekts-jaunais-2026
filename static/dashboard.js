@@ -10,6 +10,7 @@
             visualProgressPercentage: 36,
             monthlySavingRate: 70,
             recurringContributionAmount: 50,
+            targetDate: "2026-08-15",
             estimateText: "At your current pace, you may reach this goal in 5 months.",
             recommendation: "You are on a steady path toward your goal.",
         },
@@ -23,6 +24,7 @@
             visualProgressPercentage: 35,
             monthlySavingRate: 110,
             recurringContributionAmount: 100,
+            targetDate: "2026-11-30",
             estimateText: "At your current pace, you may reach this goal in 8 months.",
             recommendation: "You are on a steady path toward your goal.",
         },
@@ -36,6 +38,7 @@
             visualProgressPercentage: 25,
             monthlySavingRate: 60,
             recurringContributionAmount: 40,
+            targetDate: "2026-12-31",
             estimateText: "At your current pace, you may reach this goal in 13 months.",
             recommendation: "Consider increasing your regular contribution to reach your goal faster.",
         },
@@ -49,6 +52,7 @@
             visualProgressPercentage: 36,
             monthlySavingRate: 180,
             recurringContributionAmount: 150,
+            targetDate: "2026-09-10",
             estimateText: "At your current pace, you may reach this goal in 9 months.",
             recommendation: "You are ahead of schedule.",
         },
@@ -60,7 +64,7 @@
         minimumFractionDigits: 2,
     });
 
-    const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    const fullDateFormatter = new Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -71,8 +75,6 @@
         month: "long",
     });
 
-    const chartPalette = ["#a4e05d", "#8ad44a", "#81c8d6", "#ffc943", "#d86d6d", "#9d35ba"];
-    const charts = {};
     let pageMode = "demo";
 
     function formatCurrency(value) {
@@ -117,6 +119,10 @@
         }
     }
 
+    function clampProgress(value) {
+        return Math.max(0, Math.min(Number(value || 0), 100));
+    }
+
     function setMeta(overview, mode) {
         const metricStrip = document.getElementById("metricStrip");
         const modeBadge = document.getElementById("modeBadge");
@@ -125,38 +131,36 @@
         const todayLabel = document.getElementById("todayLabel");
 
         metricStrip.innerHTML = [
-            ["Target", formatCurrency(overview.totalTarget)],
-            ["Saved", formatCurrency(overview.totalSaved)],
+            ["Total target", formatCurrency(overview.totalTarget)],
+            ["Saved so far", formatCurrency(overview.totalSaved)],
             ["Remaining", formatCurrency(overview.totalRemaining)],
             ["Average progress", `${overview.averageProgress.toFixed(1)}%`],
         ]
             .map(
                 ([label, value]) => `
-                    <div class="metric-pill">
-                        <div class="metric-label">${label}</div>
-                        <div class="metric-value">${value}</div>
-                    </div>
+                    <article class="stat-card">
+                        <div class="stat-label">${label}</div>
+                        <div class="stat-value">${value}</div>
+                    </article>
                 `
             )
             .join("");
 
-        todayLabel.textContent = dateFormatter.format(new Date());
-
         const currentMonth = new Date();
         monthInput.value = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`;
         monthDisplay.textContent = shortMonthFormatter.format(currentMonth);
+        todayLabel.textContent = fullDateFormatter.format(currentMonth);
 
         monthInput.addEventListener("change", () => {
             if (!monthInput.value) {
                 return;
             }
             const [year, month] = monthInput.value.split("-");
-            const pickedDate = new Date(Number(year), Number(month) - 1, 1);
-            monthDisplay.textContent = shortMonthFormatter.format(pickedDate);
+            monthDisplay.textContent = shortMonthFormatter.format(new Date(Number(year), Number(month) - 1, 1));
         });
 
-        modeBadge.textContent = mode === "live" ? "Live data from API" : "Demo preview mode";
-        modeBadge.className = `mode-badge ${mode === "live" ? "mode-live" : "mode-demo"}`;
+        modeBadge.textContent = mode === "live" ? "Live API mode" : "Demo preview mode";
+        modeBadge.className = `mode-box ${mode === "live" ? "mode-live" : "mode-demo"}`;
     }
 
     function renderSidebar(goals) {
@@ -168,18 +172,125 @@
         }
 
         sidebarGoals.innerHTML = goals
-            .slice(0, 6)
+            .slice(0, 4)
             .map(
                 (goal) => `
                     <div class="sidebar-goal">
                         <div class="sidebar-goal-top">
                             <span class="sidebar-goal-title">${goal.title}</span>
-                            <span class="sidebar-goal-progress">${Number(goal.progressPercentage || 0).toFixed(0)}%</span>
+                            <span class="sidebar-goal-progress">${clampProgress(goal.progressPercentage).toFixed(0)}%</span>
                         </div>
                         <div class="mini-progress">
-                            <div class="mini-progress-fill" style="width:${Math.min(Number(goal.visualProgressPercentage || 0), 100)}%"></div>
+                            <div class="mini-progress-fill" style="width:${clampProgress(goal.visualProgressPercentage)}%"></div>
                         </div>
-                        <div class="sidebar-goal-meta">${formatCurrency(goal.totalSaved)} saved of ${formatCurrency(goal.targetAmount)}</div>
+                        <div class="sidebar-goal-meta">${formatCurrency(goal.totalSaved)} of ${formatCurrency(goal.targetAmount)}</div>
+                    </div>
+                `
+            )
+            .join("");
+    }
+
+    function renderMainProgress(goals) {
+        const goalProgressList = document.getElementById("goalProgressList");
+
+        goalProgressList.innerHTML = goals
+            .map(
+                (goal) => `
+                    <div class="goal-progress-card">
+                        <div class="goal-progress-top">
+                            <div>
+                                <div class="goal-progress-title">${goal.title}</div>
+                                <div class="goal-progress-meta">${goal.estimateText || "No estimate yet."}</div>
+                            </div>
+                            <strong>${clampProgress(goal.progressPercentage).toFixed(0)}%</strong>
+                        </div>
+                        <div class="track">
+                            <div class="track-fill" style="width:${clampProgress(goal.visualProgressPercentage)}%"></div>
+                        </div>
+                        <div class="goal-progress-amounts">
+                            <div>
+                                <span>Target</span>
+                                <strong>${formatCurrency(goal.targetAmount)}</strong>
+                            </div>
+                            <div>
+                                <span>Saved</span>
+                                <strong>${formatCurrency(goal.totalSaved)}</strong>
+                            </div>
+                            <div>
+                                <span>Left</span>
+                                <strong>${formatCurrency(goal.remainingAmount)}</strong>
+                            </div>
+                            <div>
+                                <span>Recurring</span>
+                                <strong>${formatCurrency(goal.recurringContributionAmount)}/mo</strong>
+                            </div>
+                        </div>
+                        <div class="progress-foot">
+                            <span>${goal.recommendation || "No recommendation yet."}</span>
+                            <span>${goal.targetDate || "No target date"}</span>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+    }
+
+    function renderPace(goals) {
+        const paceList = document.getElementById("paceList");
+        const maxRate = Math.max(...goals.map((goal) => Number(goal.monthlySavingRate || 0)), 1);
+
+        paceList.innerHTML = goals
+            .slice(0, 5)
+            .map((goal) => {
+                const width = (Number(goal.monthlySavingRate || 0) / maxRate) * 100;
+                return `
+                    <div class="compact-progress-card">
+                        <div class="compact-progress-top">
+                            <span>${goal.title}</span>
+                            <strong>${formatCurrency(goal.monthlySavingRate)}/mo</strong>
+                        </div>
+                        <div class="track-thin">
+                            <div class="track-fill-thin" style="width:${clampProgress(width)}%"></div>
+                        </div>
+                        <div class="compact-progress-note">Recurring plan: ${formatCurrency(goal.recurringContributionAmount)}/mo</div>
+                    </div>
+                `;
+            })
+            .join("");
+    }
+
+    function renderUpcoming(goals) {
+        const upcomingList = document.getElementById("upcomingList");
+        const sortedGoals = [...goals].sort((a, b) => {
+            const aDate = a.targetDate || "9999-12-31";
+            const bDate = b.targetDate || "9999-12-31";
+            return aDate.localeCompare(bDate);
+        });
+
+        upcomingList.innerHTML = sortedGoals
+            .slice(0, 5)
+            .map(
+                (goal) => `
+                    <div class="upcoming-card">
+                        <div class="upcoming-title">${goal.title}</div>
+                        <div class="upcoming-date">${goal.targetDate || "No target date"}</div>
+                        <div class="upcoming-meta">${formatCurrency(goal.remainingAmount)} left to save</div>
+                    </div>
+                `
+            )
+            .join("");
+    }
+
+    function renderRecommendations(goals) {
+        const recommendationList = document.getElementById("recommendationList");
+
+        recommendationList.innerHTML = goals
+            .slice(0, 4)
+            .map(
+                (goal) => `
+                    <div class="recommendation-card">
+                        <div class="recommendation-card-title">${goal.title}</div>
+                        <div class="recommendation-card-text">${goal.recommendation || "No recommendation yet."}</div>
                     </div>
                 `
             )
@@ -194,154 +305,21 @@
                 (goal) => `
                     <tr>
                         <td>${goal.title}</td>
-                        <td>${formatCurrency(goal.targetAmount)}</td>
                         <td>${formatCurrency(goal.totalSaved)}</td>
                         <td>${formatCurrency(goal.remainingAmount)}</td>
-                        <td class="progress-cell">${Number(goal.progressPercentage || 0).toFixed(0)}%</td>
+                        <td class="table-progress-cell">
+                            <div class="table-progress-label">
+                                <span>Completion</span>
+                                <span>${clampProgress(goal.progressPercentage).toFixed(0)}%</span>
+                            </div>
+                            <div class="track-thin">
+                                <div class="track-fill-thin" style="width:${clampProgress(goal.visualProgressPercentage)}%"></div>
+                            </div>
+                        </td>
                     </tr>
                 `
             )
             .join("");
-    }
-
-    function renderRecommendations(goals) {
-        const recommendationList = document.getElementById("recommendationList");
-
-        recommendationList.innerHTML = goals
-            .slice(0, 5)
-            .map(
-                (goal) => `
-                    <div class="recommendation-card">
-                        <div class="recommendation-card-title">${goal.title}</div>
-                        <div class="recommendation-card-text">${goal.recommendation || "No recommendation yet."}</div>
-                    </div>
-                `
-            )
-            .join("");
-    }
-
-    function destroyChart(chartId) {
-        if (charts[chartId]) {
-            charts[chartId].destroy();
-        }
-    }
-
-    function createChart(chartId, config) {
-        destroyChart(chartId);
-        const context = document.getElementById(chartId);
-        if (!context || !window.Chart) {
-            return;
-        }
-        charts[chartId] = new window.Chart(context, config);
-    }
-
-    function chartDefaults() {
-        if (!window.Chart) {
-            return;
-        }
-
-        window.Chart.defaults.color = "#dce7ef";
-        window.Chart.defaults.font.family = "Manrope";
-        window.Chart.defaults.plugins.legend.labels.boxWidth = 12;
-        window.Chart.defaults.plugins.legend.labels.boxHeight = 12;
-    }
-
-    function renderCharts(goals, overview) {
-        chartDefaults();
-
-        createChart("overviewChart", {
-            type: "doughnut",
-            data: {
-                labels: ["Saved", "Remaining"],
-                datasets: [
-                    {
-                        data: [overview.totalSaved, Math.max(overview.totalRemaining, 0)],
-                        backgroundColor: ["#a4e05d", "#d8dce5"],
-                        borderWidth: 0,
-                    },
-                ],
-            },
-            options: {
-                cutout: "62%",
-                plugins: {
-                    legend: {
-                        position: "bottom",
-                    },
-                },
-            },
-        });
-
-        createChart("paceChart", {
-            type: "bar",
-            data: {
-                labels: goals.map((goal) => goal.title),
-                datasets: [
-                    {
-                        label: "Monthly saving pace",
-                        data: goals.map((goal) => Number(goal.monthlySavingRate || 0)),
-                        backgroundColor: ["#a4e05d", "#92d74d", "#81c8d6", "#ffc943", "#d86d6d"],
-                        borderRadius: 10,
-                    },
-                ],
-            },
-            options: {
-                scales: {
-                    x: {
-                        grid: { display: false },
-                    },
-                    y: {
-                        grid: { color: "rgba(255,255,255,0.08)" },
-                    },
-                },
-                plugins: {
-                    legend: { display: false },
-                },
-            },
-        });
-
-        createChart("targetChart", {
-            type: "doughnut",
-            data: {
-                labels: goals.map((goal) => goal.title),
-                datasets: [
-                    {
-                        data: goals.map((goal) => Number(goal.targetAmount || 0)),
-                        backgroundColor: chartPalette,
-                        borderWidth: 0,
-                    },
-                ],
-            },
-            options: {
-                cutout: "52%",
-                plugins: {
-                    legend: {
-                        position: "bottom",
-                    },
-                },
-            },
-        });
-
-        createChart("savedChart", {
-            type: "doughnut",
-            data: {
-                labels: goals.map((goal) => goal.title),
-                datasets: [
-                    {
-                        data: goals.map((goal) => Number(goal.totalSaved || 0)),
-                        backgroundColor: ["#81c8d6", "#d86d6d", "#ffc943", "#a4e05d", "#9d35ba", "#d8dce5"],
-                        borderWidth: 0,
-                    },
-                ],
-            },
-            options: {
-                cutout: "52%",
-                plugins: {
-                    legend: {
-                        position: "bottom",
-                    },
-                },
-            },
-        });
     }
 
     async function handleGoalFormSubmit(event) {
@@ -381,7 +359,7 @@
             }
 
             form.reset();
-            note.textContent = "Goal saved. Dashboard data refreshed.";
+            note.textContent = "Goal saved. Dashboard refreshed.";
             await loadAndRender();
         } catch (_error) {
             note.textContent = "Could not create the goal from the dashboard form.";
@@ -399,9 +377,11 @@
 
         setMeta(overview, payload.mode);
         renderSidebar(goals);
-        renderTable(goals);
+        renderMainProgress(goals);
+        renderPace(goals);
+        renderUpcoming(goals);
         renderRecommendations(goals);
-        renderCharts(goals, overview);
+        renderTable(goals);
     }
 
     function init() {
@@ -409,8 +389,7 @@
             window.lucide.createIcons();
         }
 
-        const goalForm = document.getElementById("goalForm");
-        goalForm.addEventListener("submit", handleGoalFormSubmit);
+        document.getElementById("goalForm").addEventListener("submit", handleGoalFormSubmit);
         loadAndRender();
     }
 

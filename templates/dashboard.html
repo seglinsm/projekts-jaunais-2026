@@ -10,114 +10,129 @@
     <link rel="stylesheet" href="../static/dashboard.css">
 </head>
 <body>
-    <div class="finance-shell">
-        <aside class="finance-sidebar">
-            <div class="brand-panel">
-                <button class="ghost-icon" type="button" aria-label="Open menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <div class="brand-lockup">
-                    <div class="brand-name">savefin</div>
-                    <div class="brand-tag">savings dashboard</div>
+    <div class="app-frame">
+        <aside class="side-column">
+            <div class="brand-block">
+                <div class="brand-symbol">
+                    <i data-lucide="wallet-cards"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Personal Finance</div>
+                    <div class="brand-subtitle">Savings Manager</div>
                 </div>
             </div>
 
-            <nav class="primary-nav">
-                <a class="nav-item nav-item-active" href="#">
+            <nav class="side-nav">
+                <a class="side-link side-link-active" href="#">
                     <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
+                    <span>Current Period</span>
                 </a>
-                <a class="nav-item" href="#">
-                    <i data-lucide="arrow-right-left"></i>
-                    <span>Transactions</span>
+                <a class="side-link" href="#">
+                    <i data-lucide="calendar-range"></i>
+                    <span>Year Overview</span>
                 </a>
-                <a class="nav-item" href="#">
+                <a class="side-link" href="#">
                     <i data-lucide="piggy-bank"></i>
                     <span>Savings Goals</span>
                 </a>
-                <a class="nav-item" href="#">
-                    <i data-lucide="wallet"></i>
-                    <span>Accounts</span>
+                <a class="side-link" href="#">
+                    <i data-lucide="banknote"></i>
+                    <span>Add Income</span>
                 </a>
-                <a class="nav-item" href="#">
-                    <i data-lucide="chart-column"></i>
-                    <span>Analytics</span>
+                <a class="side-link" href="#">
+                    <i data-lucide="receipt-text"></i>
+                    <span>Add Outcome</span>
                 </a>
-                <a class="nav-item" href="#">
-                    <i data-lucide="badge-euro"></i>
-                    <span>Planning</span>
+                <a class="side-link" href="#">
+                    <i data-lucide="list"></i>
+                    <span>Records</span>
                 </a>
             </nav>
 
-            <section class="sidebar-panel">
-                <div class="sidebar-title">Goals</div>
+            <section class="side-card">
+                <div class="side-card-title">Quick Goals</div>
                 <div id="sidebarGoals" class="sidebar-goals"></div>
             </section>
         </aside>
 
-        <main class="finance-main">
-            <header class="topbar">
-                <div class="metric-strip" id="metricStrip"></div>
-                <div class="topbar-actions">
-                    <button class="round-icon" type="button" aria-label="Settings">
-                        <i data-lucide="settings"></i>
-                    </button>
-                    <button class="round-icon" type="button" aria-label="Profile">
-                        <i data-lucide="circle-user-round"></i>
-                    </button>
-                    <button class="round-icon" type="button" aria-label="Share">
-                        <i data-lucide="log-out"></i>
-                    </button>
+        <main class="main-column">
+            <header class="page-top">
+                <div>
+                    <p class="page-kicker">Current Year</p>
+                    <h1 class="page-title">Savings Dashboard</h1>
+                </div>
+                <div class="page-actions">
+                    <label class="month-box">
+                        <span>Month</span>
+                        <strong id="monthDisplay">November 2024</strong>
+                        <input id="monthInput" type="month">
+                        <i data-lucide="calendar-days"></i>
+                    </label>
+                    <div class="status-box">
+                        <i data-lucide="clock-3"></i>
+                        <span id="todayLabel"></span>
+                    </div>
+                    <div id="modeBadge" class="mode-box">Loading data</div>
                 </div>
             </header>
 
-            <section class="meta-row">
-                <label class="month-card">
-                    <span class="month-label">Month</span>
-                    <span id="monthDisplay" class="month-value">November 2024</span>
-                    <input id="monthInput" type="month">
-                    <i data-lucide="calendar-days"></i>
-                </label>
-                <div class="date-pill">
-                    <i data-lucide="clock-3"></i>
-                    <span id="todayLabel"></span>
-                </div>
-                <div id="modeBadge" class="mode-badge">Loading data</div>
-            </section>
+            <section id="metricStrip" class="stats-row"></section>
 
-            <section class="dashboard-grid">
-                <article class="panel-card">
-                    <div class="panel-title">Overall Goal Progress</div>
-                    <canvas id="overviewChart"></canvas>
+            <section class="content-grid">
+                <article class="card card-span-two">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Goals overview</p>
+                            <h2>Current progress</h2>
+                        </div>
+                    </div>
+                    <div id="goalProgressList" class="progress-list"></div>
                 </article>
 
-                <article class="panel-card">
-                    <div class="panel-title">Saving Pace by Goal</div>
-                    <canvas id="paceChart"></canvas>
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Focus</p>
+                            <h2>Monthly saving pace</h2>
+                        </div>
+                    </div>
+                    <div id="paceList" class="compact-progress-list"></div>
                 </article>
 
-                <article class="panel-card">
-                    <div class="panel-title">Target Distribution</div>
-                    <canvas id="targetChart"></canvas>
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Deadlines</p>
+                            <h2>Upcoming target dates</h2>
+                        </div>
+                    </div>
+                    <div id="upcomingList" class="upcoming-list"></div>
                 </article>
 
-                <article class="panel-card">
-                    <div class="panel-title">Saved Distribution</div>
-                    <canvas id="savedChart"></canvas>
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Advice</p>
+                            <h2>Recommendations</h2>
+                        </div>
+                    </div>
+                    <div id="recommendationList" class="recommendation-list"></div>
                 </article>
 
-                <article class="panel-card panel-span-two">
-                    <div class="panel-title">Goal Overview</div>
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Numbers</p>
+                            <h2>Goal summary</h2>
+                        </div>
+                    </div>
                     <div class="table-shell">
                         <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Goal</th>
-                                    <th>Target</th>
                                     <th>Saved</th>
-                                    <th>Remaining</th>
+                                    <th>Left</th>
                                     <th>Progress</th>
                                 </tr>
                             </thead>
@@ -126,13 +141,13 @@
                     </div>
                 </article>
 
-                <article class="panel-card">
-                    <div class="panel-title">Recommendations</div>
-                    <div id="recommendationList" class="recommendation-list"></div>
-                </article>
-
-                <article class="panel-card panel-span-two">
-                    <div class="panel-title">Create a New Goal</div>
+                <article class="card card-span-two">
+                    <div class="card-head">
+                        <div>
+                            <p class="card-kicker">Create records</p>
+                            <h2>Add a new savings goal</h2>
+                        </div>
+                    </div>
                     <form id="goalForm" class="goal-form">
                         <label>
                             Goal title
@@ -153,7 +168,7 @@
                         <button type="submit" id="goalFormButton">Add Goal</button>
                     </form>
                     <p class="form-note" id="formNote">
-                        Add a goal here when the page is served by Flask. If you opened the file directly, this page runs in demo preview mode.
+                        When the file is opened directly it uses demo data. When served by Flask it saves real goals through the API.
                     </p>
                 </article>
             </section>
@@ -161,7 +176,6 @@
     </div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="../static/dashboard.js"></script>
 </body>
 </html>
