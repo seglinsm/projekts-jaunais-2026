@@ -1,74 +1,117 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaveSprint Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/dashboard.css">
+</head>
+<body>
+    <div class="finance-shell">
+        <aside class="finance-sidebar">
+            <div class="brand-panel">
+                <button class="ghost-icon" type="button" aria-label="Open menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="brand-lockup">
+                    <div class="brand-name">savefin</div>
+                    <div class="brand-tag">savings dashboard</div>
+                </div>
+            </div>
 
-{% block title %}Dashboard | SaveSprint API{% endblock %}
-{% block page_banner_title %}Savings Dashboard{% endblock %}
-
-{% block content %}
-<section class="desk-layout">
-    <aside class="nav-pane">
-        <div class="pane-head">Navigation</div>
-        <div class="nav-scroll">
-            <a class="tree-item active-item" href="{{ url_for('dashboard') }}">
-                <i data-lucide="house"></i>
-                <span>Dashboard</span>
-            </a>
-
-            <div class="tree-group">
-                <div class="tree-group-title">
+            <nav class="primary-nav">
+                <a class="nav-item nav-item-active" href="#">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i data-lucide="arrow-right-left"></i>
+                    <span>Transactions</span>
+                </a>
+                <a class="nav-item" href="#">
                     <i data-lucide="piggy-bank"></i>
                     <span>Savings Goals</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i data-lucide="wallet"></i>
+                    <span>Accounts</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i data-lucide="chart-column"></i>
+                    <span>Analytics</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i data-lucide="badge-euro"></i>
+                    <span>Planning</span>
+                </a>
+            </nav>
+
+            <section class="sidebar-panel">
+                <div class="sidebar-title">Goals</div>
+                <div id="sidebarGoals" class="sidebar-goals"></div>
+            </section>
+        </aside>
+
+        <main class="finance-main">
+            <header class="topbar">
+                <div class="metric-strip" id="metricStrip"></div>
+                <div class="topbar-actions">
+                    <button class="round-icon" type="button" aria-label="Settings">
+                        <i data-lucide="settings"></i>
+                    </button>
+                    <button class="round-icon" type="button" aria-label="Profile">
+                        <i data-lucide="circle-user-round"></i>
+                    </button>
+                    <button class="round-icon" type="button" aria-label="Share">
+                        <i data-lucide="log-out"></i>
+                    </button>
                 </div>
-                {% if goals %}
-                    {% for goal in goals %}
-                        <a class="tree-subitem" href="{{ '#' if demo_mode|default(false) else url_for('goal_detail', goal_id=goal.id) }}">
-                            <i data-lucide="flag"></i>
-                            <span>{{ goal.title }}</span>
-                        </a>
-                    {% endfor %}
-                {% else %}
-                    <div class="tree-note">No goals created yet.</div>
-                {% endif %}
-            </div>
+            </header>
 
-            <div class="tree-group">
-                <div class="tree-group-title">
-                    <i data-lucide="wallet-cards"></i>
-                    <span>Dashboard Totals</span>
+            <section class="meta-row">
+                <label class="month-card">
+                    <span class="month-label">Month</span>
+                    <span id="monthDisplay" class="month-value">November 2024</span>
+                    <input id="monthInput" type="month">
+                    <i data-lucide="calendar-days"></i>
+                </label>
+                <div class="date-pill">
+                    <i data-lucide="clock-3"></i>
+                    <span id="todayLabel"></span>
                 </div>
-                <div class="tree-note">Saved: {{ overview.totalSaved | currency }}</div>
-                <div class="tree-note">Target: {{ overview.totalTarget | currency }}</div>
-                <div class="tree-note">Goals: {{ overview.goalCount }}</div>
-                <div class="tree-note">Average progress: {{ overview.averageProgress }}%</div>
-            </div>
-        </div>
-    </aside>
+                <div id="modeBadge" class="mode-badge">Loading data</div>
+            </section>
 
-    <div class="desk-content">
-        <section class="summary-strip">
-            <div class="summary-chip">
-                <span>Total Goals</span>
-                <strong>{{ overview.goalCount }}</strong>
-            </div>
-            <div class="summary-chip">
-                <span>Total Target</span>
-                <strong>{{ overview.totalTarget | currency }}</strong>
-            </div>
-            <div class="summary-chip">
-                <span>Total Saved</span>
-                <strong>{{ overview.totalSaved | currency }}</strong>
-            </div>
-            <div class="summary-chip">
-                <span>Average Progress</span>
-                <strong>{{ overview.averageProgress }}%</strong>
-            </div>
-        </section>
+            <section class="dashboard-grid">
+                <article class="panel-card">
+                    <div class="panel-title">Overall Goal Progress</div>
+                    <canvas id="overviewChart"></canvas>
+                </article>
 
-        <section class="desk-panels">
-            <article class="desk-panel desk-panel-wide">
-                <div class="desk-panel-head">Savings Goals Overview</div>
-                {% if goals %}
-                    <div class="table-wrapper">
-                        <table class="finance-table">
+                <article class="panel-card">
+                    <div class="panel-title">Saving Pace by Goal</div>
+                    <canvas id="paceChart"></canvas>
+                </article>
+
+                <article class="panel-card">
+                    <div class="panel-title">Target Distribution</div>
+                    <canvas id="targetChart"></canvas>
+                </article>
+
+                <article class="panel-card">
+                    <div class="panel-title">Saved Distribution</div>
+                    <canvas id="savedChart"></canvas>
+                </article>
+
+                <article class="panel-card panel-span-two">
+                    <div class="panel-title">Goal Overview</div>
+                    <div class="table-shell">
+                        <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Goal</th>
@@ -78,126 +121,47 @@
                                     <th>Progress</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for goal in goals %}
-                                    <tr>
-                                        <td>
-                                            <a class="table-link" href="{{ '#' if demo_mode|default(false) else url_for('goal_detail', goal_id=goal.id) }}">
-                                                {{ goal.title }}
-                                            </a>
-                                        </td>
-                                        <td>{{ goal.targetAmount | currency }}</td>
-                                        <td>{{ goal.totalSaved | currency }}</td>
-                                        <td>{{ goal.remainingAmount | currency }}</td>
-                                        <td>{{ goal.progressPercentage }}%</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
+                            <tbody id="goalTableBody"></tbody>
                         </table>
                     </div>
-                {% else %}
-                    <div class="panel-empty">Create a goal to populate the dashboard table.</div>
-                {% endif %}
-            </article>
+                </article>
 
-            <article class="desk-panel">
-                <div class="desk-panel-head">Goal Progress</div>
-                {% if goals %}
-                    <div class="bar-list">
-                        {% for goal in goals[:5] %}
-                            <div class="bar-row">
-                                <div class="bar-meta">
-                                    <span>{{ goal.title }}</span>
-                                    <strong>{{ goal.progressPercentage }}%</strong>
-                                </div>
-                                <div class="mini-track">
-                                    <div class="mini-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="panel-empty">No progress data yet.</div>
-                {% endif %}
-            </article>
+                <article class="panel-card">
+                    <div class="panel-title">Recommendations</div>
+                    <div id="recommendationList" class="recommendation-list"></div>
+                </article>
 
-            <article class="desk-panel" id="create-goal">
-                <div class="desk-panel-head">Create New Goal</div>
-                <form action="{{ '#' if demo_mode|default(false) else url_for('create_goal_route') }}" method="post" class="stack-form compact-form">
-                    <label>
-                        Goal title
-                        <input type="text" name="title" placeholder="Trip to Italy" required>
-                    </label>
-                    <label>
-                        Target amount
-                        <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
-                    </label>
-                    <label>
-                        Description
-                        <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
-                    </label>
-                    <label>
-                        Target date
-                        <input type="date" name="targetDate">
-                    </label>
-                    <button type="submit">{{ 'Demo Mode' if demo_mode|default(false) else 'Add Goal' }}</button>
-                </form>
-            </article>
-
-            <article class="desk-panel">
-                <div class="desk-panel-head">Target Dates</div>
-                {% if goals %}
-                    <div class="table-wrapper">
-                        <table class="finance-table compact-table">
-                            <thead>
-                                <tr>
-                                    <th>Goal</th>
-                                    <th>Target Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for goal in goals[:6] %}
-                                    <tr>
-                                        <td>{{ goal.title }}</td>
-                                        <td>{{ goal.targetDate if goal.targetDate else "Not set" }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="panel-empty">No target dates available.</div>
-                {% endif %}
-            </article>
-
-            <article class="desk-panel desk-panel-wide">
-                <div class="desk-panel-head">Goal Recommendations</div>
-                {% if goals %}
-                    <div class="table-wrapper">
-                        <table class="finance-table">
-                            <thead>
-                                <tr>
-                                    <th>Goal</th>
-                                    <th>Estimate</th>
-                                    <th>Recommendation</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for goal in goals %}
-                                    <tr>
-                                        <td>{{ goal.title }}</td>
-                                        <td>{{ goal.estimateText }}</td>
-                                        <td>{{ goal.recommendation }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="panel-empty">Recommendations will appear after goals are added.</div>
-                {% endif %}
-            </article>
-        </section>
+                <article class="panel-card panel-span-two">
+                    <div class="panel-title">Create a New Goal</div>
+                    <form id="goalForm" class="goal-form">
+                        <label>
+                            Goal title
+                            <input type="text" name="title" placeholder="Trip to Italy" required>
+                        </label>
+                        <label>
+                            Target amount
+                            <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
+                        </label>
+                        <label>
+                            Description
+                            <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
+                        </label>
+                        <label>
+                            Target date
+                            <input type="date" name="targetDate">
+                        </label>
+                        <button type="submit" id="goalFormButton">Add Goal</button>
+                    </form>
+                    <p class="form-note" id="formNote">
+                        Add a goal here when the page is served by Flask. If you opened the file directly, this page runs in demo preview mode.
+                    </p>
+                </article>
+            </section>
+        </main>
     </div>
-</section>
-{% endblock %}
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="../static/dashboard.js"></script>
+</body>
+</html>
