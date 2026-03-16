@@ -4,6 +4,7 @@ import os
 from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 
 from database import DEFAULT_DATABASE, get_db, init_app as init_database_app, init_db
+from presentation_demo import get_demo_dashboard_context
 from services import (
     NotFoundError,
     ValidationError,
@@ -57,6 +58,10 @@ def _register_web_routes(app):
         goals = list_goal_summaries(get_db())
         overview = build_dashboard_overview(goals)
         return render_template("dashboard.html", goals=goals, overview=overview)
+
+    @app.get("/presentation-dashboard")
+    def presentation_dashboard():
+        return render_template("dashboard.html", **get_demo_dashboard_context())
 
     @app.get("/goals/<int:goal_id>")
     def goal_detail(goal_id):

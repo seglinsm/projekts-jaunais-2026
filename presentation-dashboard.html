@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | SaveSprint API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-chrome">
+            <div class="title-strip">
+                <div class="traffic-lights" aria-hidden="true">
+                    <span class="light light-red"></span>
+                    <span class="light light-yellow"></span>
+                    <span class="light light-green"></span>
+                </div>
+                <div class="window-caption">SaveSprint Savings Manager</div>
+                <div class="window-actions" aria-hidden="true">
+                    <span>-</span>
+                    <span>[]</span>
+                    <span>x</span>
+                </div>
+            </div>
+
+            <div class="menu-strip">
+                <span class="menu-item">File</span>
+                <span class="menu-item">Goals</span>
+                <span class="menu-item">Tools</span>
+                <span class="menu-item">View</span>
+                <span class="menu-item">Help</span>
+            </div>
+
+            <div class="toolbar-strip">
+                <a class="toolbar-button" href="#" title="Dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                </a>
+                <a class="toolbar-button" href="#create-goal" title="Create goal">
+                    <i data-lucide="circle-plus"></i>
+                </a>
+                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Open API JSON">
+                    <i data-lucide="database"></i>
+                </a>
+                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Health check">
+                    <i data-lucide="shield-check"></i>
+                </a>
+                <span class="toolbar-separator" aria-hidden="true"></span>
+                <span class="toolbar-label">Savings Dashboard</span>
+            </div>
+        </header>
+
+        
+            
+        
+
+        <main class="workspace-main">
+            
+<section class="desk-layout">
+    <aside class="nav-pane">
+        <div class="pane-head">Navigation</div>
+        <div class="nav-scroll">
+            <a class="tree-item active-item" href="#">
+                <i data-lucide="house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="tree-group">
+                <div class="tree-group-title">
+                    <i data-lucide="piggy-bank"></i>
+                    <span>Savings Goals</span>
+                </div>
+                
+                    
+                        <a class="tree-subitem" href="#">
+                            <i data-lucide="flag"></i>
+                            <span>Trip to Italy</span>
+                        </a>
+                    
+                        <a class="tree-subitem" href="#">
+                            <i data-lucide="flag"></i>
+                            <span>New Laptop</span>
+                        </a>
+                    
+                        <a class="tree-subitem" href="#">
+                            <i data-lucide="flag"></i>
+                            <span>Emergency Fund</span>
+                        </a>
+                    
+                
+            </div>
+
+            <div class="tree-group">
+                <div class="tree-group-title">
+                    <i data-lucide="wallet-cards"></i>
+                    <span>Dashboard Totals</span>
+                </div>
+                <div class="tree-note">Saved: EUR 850.00</div>
+                <div class="tree-note">Target: EUR 2,700.00</div>
+                <div class="tree-note">Goals: 3</div>
+                <div class="tree-note">Average progress: 32.0%</div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="desk-content">
+        <section class="summary-strip">
+            <div class="summary-chip">
+                <span>Total Goals</span>
+                <strong>3</strong>
+            </div>
+            <div class="summary-chip">
+                <span>Total Target</span>
+                <strong>EUR 2,700.00</strong>
+            </div>
+            <div class="summary-chip">
+                <span>Total Saved</span>
+                <strong>EUR 850.00</strong>
+            </div>
+            <div class="summary-chip">
+                <span>Average Progress</span>
+                <strong>32.0%</strong>
+            </div>
+        </section>
+
+        <section class="desk-panels">
+            <article class="desk-panel desk-panel-wide">
+                <div class="desk-panel-head">Savings Goals Overview</div>
+                
+                    <div class="table-wrapper">
+                        <table class="finance-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Target</th>
+                                    <th>Saved</th>
+                                    <th>Remaining</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                    <tr>
+                                        <td>
+                                            <a class="table-link" href="#">
+                                                Trip to Italy
+                                            </a>
+                                        </td>
+                                        <td>EUR 500.00</td>
+                                        <td>EUR 180.00</td>
+                                        <td>EUR 320.00</td>
+                                        <td>36.0%</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>
+                                            <a class="table-link" href="#">
+                                                New Laptop
+                                            </a>
+                                        </td>
+                                        <td>EUR 1,200.00</td>
+                                        <td>EUR 420.00</td>
+                                        <td>EUR 780.00</td>
+                                        <td>35.0%</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>
+                                            <a class="table-link" href="#">
+                                                Emergency Fund
+                                            </a>
+                                        </td>
+                                        <td>EUR 1,000.00</td>
+                                        <td>EUR 250.00</td>
+                                        <td>EUR 750.00</td>
+                                        <td>25.0%</td>
+                                    </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                
+            </article>
+
+            <article class="desk-panel">
+                <div class="desk-panel-head">Goal Progress</div>
+                
+                    <div class="bar-list">
+                        
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span>Trip to Italy</span>
+                                    <strong>36.0%</strong>
+                                </div>
+                                <div class="mini-track">
+                                    <div class="mini-fill" style="width: 36.0%"></div>
+                                </div>
+                            </div>
+                        
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span>New Laptop</span>
+                                    <strong>35.0%</strong>
+                                </div>
+                                <div class="mini-track">
+                                    <div class="mini-fill" style="width: 35.0%"></div>
+                                </div>
+                            </div>
+                        
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span>Emergency Fund</span>
+                                    <strong>25.0%</strong>
+                                </div>
+                                <div class="mini-track">
+                                    <div class="mini-fill" style="width: 25.0%"></div>
+                                </div>
+                            </div>
+                        
+                    </div>
+                
+            </article>
+
+            <article class="desk-panel" id="create-goal">
+                <div class="desk-panel-head">Create New Goal</div>
+                <form action="#" method="post" class="stack-form compact-form">
+                    <label>
+                        Goal title
+                        <input type="text" name="title" placeholder="Trip to Italy" required>
+                    </label>
+                    <label>
+                        Target amount
+                        <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
+                    </label>
+                    <label>
+                        Description
+                        <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
+                    </label>
+                    <label>
+                        Target date
+                        <input type="date" name="targetDate">
+                    </label>
+                    <button type="submit">Demo Mode</button>
+                </form>
+            </article>
+
+            <article class="desk-panel">
+                <div class="desk-panel-head">Target Dates</div>
+                
+                    <div class="table-wrapper">
+                        <table class="finance-table compact-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Target Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                    <tr>
+                                        <td>Trip to Italy</td>
+                                        <td>2026-08-15</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>New Laptop</td>
+                                        <td>2026-11-30</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>Emergency Fund</td>
+                                        <td>2026-12-31</td>
+                                    </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                
+            </article>
+
+            <article class="desk-panel desk-panel-wide">
+                <div class="desk-panel-head">Goal Recommendations</div>
+                
+                    <div class="table-wrapper">
+                        <table class="finance-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Estimate</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                    <tr>
+                                        <td>Trip to Italy</td>
+                                        <td>At your current pace, you may reach this goal in 5 months. Estimated completion: August 2026.</td>
+                                        <td>You are on a steady path toward your goal.</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>New Laptop</td>
+                                        <td>At your current pace, you may reach this goal in 8 months. Estimated completion: November 2026.</td>
+                                        <td>You are on a steady path toward your goal.</td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td>Emergency Fund</td>
+                                        <td>At your current pace, you may reach this goal in 13 months. Estimated completion: April 2027.</td>
+                                        <td>Consider increasing your regular contribution to reach your goal faster.</td>
+                                    </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                
+            </article>
+        </section>
+    </div>
+</section>
+
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
