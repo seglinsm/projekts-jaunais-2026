@@ -12,18 +12,36 @@
 <body>
     <div class="page-shell">
         <header class="site-header">
-            <a class="brand" href="{{ url_for('dashboard') }}">
-                <span class="brand-mark">S</span>
-                <span class="brand-text">
-                    <small>Student MVP</small>
-                    <strong>SaveSprint API</strong>
-                </span>
-            </a>
+            <div class="brand-wrap">
+                <a class="brand" href="{{ url_for('dashboard') }}">
+                    <span class="brand-mark">S</span>
+                    <span class="brand-text">
+                        <small>Student MVP</small>
+                        <strong>SaveSprint</strong>
+                    </span>
+                </a>
+                <p class="header-copy">
+                    Savings goal tracker with clear progress, estimate, and recommendation blocks.
+                </p>
+            </div>
             <nav class="site-nav">
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="/api/health" target="_blank" rel="noreferrer">API Health</a>
+                <a href="/api/goals" target="_blank" rel="noreferrer">API JSON</a>
+                <a href="/api/health" target="_blank" rel="noreferrer">Health</a>
             </nav>
         </header>
+
+        <section class="context-banner">
+            <div>
+                <p class="eyebrow">{% block page_kicker %}Savings Goal Tracker{% endblock %}</p>
+                <h1 class="banner-title">{% block page_banner_title %}Simple savings planning prototype{% endblock %}</h1>
+            </div>
+            <p class="banner-copy">
+                {% block page_banner_note %}
+                    Create a goal, add savings, and immediately see how close you are to your target.
+                {% endblock %}
+            </p>
+        </section>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

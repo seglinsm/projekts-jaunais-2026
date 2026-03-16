@@ -1,71 +1,91 @@
 {% extends "base.html" %}
 
 {% block title %}{{ goal.title }} | SaveSprint API{% endblock %}
+{% block page_kicker %}Goal Details{% endblock %}
+{% block page_banner_title %}{{ goal.title }}{% endblock %}
+{% block page_banner_note %}
+    This page focuses on one goal only: current progress, estimated finish, recommendation, and the forms for adding new savings activity.
+{% endblock %}
 
 {% block content %}
-<section class="detail-header">
-    <div>
-        <p class="eyebrow">Goal details</p>
-        <h1>{{ goal.title }}</h1>
-        <p class="hero-copy">
-            {{ goal.description if goal.description else "This goal does not have a description yet." }}
-        </p>
-    </div>
+<section class="detail-topbar">
     <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+    <div class="detail-topbar-meta">
+        <span class="status-note">Target date: {{ goal.targetDate if goal.targetDate else "Not set" }}</span>
+        <span class="status-note">Entries: {{ goal.contributionCount }}</span>
+    </div>
 </section>
 
-<section class="panel detail-summary">
-    <div class="summary-top">
+<section class="panel focus-panel">
+    <div class="section-heading">
         <div>
-            <span class="eyebrow">Main summary</span>
+            <p class="eyebrow">Current goal status</p>
             <h2>{{ goal.progressPercentage }}% complete</h2>
         </div>
-        <span class="pill">{{ goal.contributionCount }} entries</span>
+        <p class="section-copy compact-copy">
+            {% if goal.description %}
+                {{ goal.description }}
+            {% else %}
+                No description added yet.
+            {% endif %}
+        </p>
     </div>
 
-    <div class="metric-grid">
-        <div>
+    <div class="summary-band">
+        <div class="summary-item emphasis-item">
+            <span>Saved so far</span>
+            <strong>{{ goal.totalSaved | currency }}</strong>
+        </div>
+        <div class="summary-item">
             <span>Target amount</span>
             <strong>{{ goal.targetAmount | currency }}</strong>
         </div>
-        <div>
-            <span>Saved amount</span>
-            <strong>{{ goal.totalSaved | currency }}</strong>
-        </div>
-        <div>
+        <div class="summary-item">
             <span>Remaining amount</span>
             <strong>{{ goal.remainingAmount | currency }}</strong>
         </div>
-        <div>
-            <span>Recurring contribution</span>
+        <div class="summary-item">
+            <span>Recurring plan</span>
             <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
         </div>
+        <div class="summary-item">
+            <span>Current pace</span>
+            <strong>{{ goal.monthlySavingRate | currency }}/mo</strong>
+        </div>
     </div>
 
-    <div class="progress-track large-track">
-        <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+    <div class="progress-block">
+        <div class="progress-label-row">
+            <strong>Progress bar</strong>
+            <span>{{ goal.visualProgressPercentage }}% visual progress</span>
+        </div>
+        <div class="progress-track large-track">
+            <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+        </div>
+        <p class="progress-label">
+            {{ goal.totalSaved | currency }} saved out of {{ goal.targetAmount | currency }}
+        </p>
     </div>
 
-    <dl class="info-list">
-        <div>
-            <dt>Target date</dt>
-            <dd>{{ goal.targetDate if goal.targetDate else "Not set" }}</dd>
+    <div class="insight-grid">
+        <div class="insight-card">
+            <span class="insight-label">Estimated completion</span>
+            <p>{{ goal.estimateText }}</p>
         </div>
-        <div>
-            <dt>Estimated completion</dt>
-            <dd>{{ goal.estimateText }}</dd>
+        <div class="insight-card accent-card">
+            <span class="insight-label">Recommendation</span>
+            <p>{{ goal.recommendation }}</p>
         </div>
-        <div>
-            <dt>Recommendation</dt>
-            <dd>{{ goal.recommendation }}</dd>
-        </div>
-    </dl>
+    </div>
 </section>
 
-<section class="detail-grid">
-    <article class="panel">
-        <p class="eyebrow">Manual contribution</p>
-        <h2>Add deposit</h2>
+<section class="workbench-grid">
+    <article class="panel action-panel">
+        <p class="eyebrow">Step 1</p>
+        <h2>Add a one-time deposit</h2>
+        <p class="section-copy">
+            Use this form when the user manually saves money.
+        </p>
         <form action="{{ url_for('add_contribution_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <input type="hidden" name="type" value="manual">
             <label>
@@ -84,9 +104,12 @@
         </form>
     </article>
 
-    <article class="panel">
-        <p class="eyebrow">Recurring plan</p>
-        <h2>Weekly or monthly savings</h2>
+    <article class="panel action-panel">
+        <p class="eyebrow">Step 2</p>
+        <h2>Set the recurring plan</h2>
+        <p class="section-copy">
+            Weekly or monthly savings are used to estimate when the goal may be completed.
+        </p>
         <form action="{{ url_for('recurring_plan_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <label>
                 Amount
@@ -126,9 +149,12 @@
         </form>
     </article>
 
-    <article class="panel">
-        <p class="eyebrow">Edit goal</p>
-        <h2>Update target details</h2>
+    <article class="panel action-panel">
+        <p class="eyebrow">Step 3</p>
+        <h2>Edit the goal information</h2>
+        <p class="section-copy">
+            Update the name, description, target amount, or target date.
+        </p>
         <form action="{{ url_for('update_goal_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <label>
                 Goal title
@@ -151,12 +177,15 @@
     </article>
 </section>
 
-<section class="panel">
-    <div class="table-header">
+<section class="panel history-panel">
+    <div class="section-heading">
         <div>
             <p class="eyebrow">Contribution history</p>
-            <h2>All saved entries</h2>
+            <h2>All savings entries for this goal</h2>
         </div>
+        <p class="section-copy compact-copy">
+            Manual contributions can be deleted. Recurring rows are generated automatically from the recurring plan.
+        </p>
     </div>
 
     {% if goal.contributions %}

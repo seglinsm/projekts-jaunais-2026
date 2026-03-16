@@ -1,40 +1,20 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard | SaveSprint API{% endblock %}
+{% block page_kicker %}Dashboard{% endblock %}
+{% block page_banner_title %}All savings goals in one clear view{% endblock %}
+{% block page_banner_note %}
+    This page answers four questions immediately: what the goal is, how much is saved, how much is left, and when the goal may be reached.
+{% endblock %}
 
 {% block content %}
-<section class="hero-grid">
-    <article class="panel hero-panel">
-        <p class="eyebrow">Savings goals dashboard</p>
-        <h1>Track how close you are to every goal.</h1>
-        <p class="hero-copy">
-            This prototype lets you create savings goals, add deposits, apply recurring plans,
-            and immediately see saved amount, remaining amount, progress, estimated completion,
-            and a simple recommendation.
-        </p>
-        <div class="overview-grid">
-            <div class="stat-card">
-                <span>Total goals</span>
-                <strong>{{ overview.goalCount }}</strong>
-            </div>
-            <div class="stat-card">
-                <span>Total target</span>
-                <strong>{{ overview.totalTarget | currency }}</strong>
-            </div>
-            <div class="stat-card">
-                <span>Total saved</span>
-                <strong>{{ overview.totalSaved | currency }}</strong>
-            </div>
-            <div class="stat-card">
-                <span>Average progress</span>
-                <strong>{{ overview.averageProgress }}%</strong>
-            </div>
-        </div>
-    </article>
-
+<section class="dashboard-layout">
     <aside class="panel form-panel">
-        <p class="eyebrow">Create goal</p>
-        <h2>New savings target</h2>
+        <p class="eyebrow">Create a new goal</p>
+        <h2>Add a savings target</h2>
+        <p class="section-copy">
+            Start with one goal such as a trip, laptop, or emergency fund.
+        </p>
         <form action="{{ url_for('create_goal_route') }}" method="post" class="stack-form">
             <label>
                 Goal title
@@ -46,7 +26,7 @@
             </label>
             <label>
                 Description
-                <textarea name="description" rows="3" placeholder="Flights, hotel, and food."></textarea>
+                <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
             </label>
             <label>
                 Target date
@@ -55,81 +35,148 @@
             <button type="submit">Create goal</button>
         </form>
     </aside>
-</section>
 
-<section class="panel api-panel">
-    <div>
-        <p class="eyebrow">API snapshot</p>
-        <h2>Core endpoints</h2>
+    <div class="dashboard-main">
+        <article class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Quick overview</p>
+                    <h2>What the dashboard shows</h2>
+                </div>
+                <p class="section-copy compact-copy">
+                    Each card below shows the goal name, saved amount, remaining amount, current pace,
+                    expected completion time, and a short recommendation.
+                </p>
+            </div>
+
+            <div class="overview-grid">
+                <div class="stat-card">
+                    <span>Total goals</span>
+                    <strong>{{ overview.goalCount }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Total target</span>
+                    <strong>{{ overview.totalTarget | currency }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Total saved</span>
+                    <strong>{{ overview.totalSaved | currency }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Average progress</span>
+                    <strong>{{ overview.averageProgress }}%</strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="panel guide-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">How to read each goal</p>
+                    <h2>Presentation-friendly structure</h2>
+                </div>
+            </div>
+            <div class="guide-grid">
+                <div class="guide-item">
+                    <strong>Saved so far</strong>
+                    <p>The amount already collected for the goal.</p>
+                </div>
+                <div class="guide-item">
+                    <strong>Left to save</strong>
+                    <p>The money still needed to reach the target amount.</p>
+                </div>
+                <div class="guide-item">
+                    <strong>Estimated finish</strong>
+                    <p>A forecast based on the recurring plan and recent deposits.</p>
+                </div>
+                <div class="guide-item">
+                    <strong>Recommendation</strong>
+                    <p>A simple message that tells the user whether progress looks strong or weak.</p>
+                </div>
+            </div>
+        </article>
     </div>
-    <pre><code>GET /api/goals
-POST /api/goals
-GET /api/goals/&lt;id&gt;
-POST /api/goals/&lt;id&gt;/contributions
-PUT /api/goals/&lt;id&gt;/recurring-plan</code></pre>
 </section>
 
 {% if goals %}
-    <section class="goal-grid">
+    <section class="goal-list">
         {% for goal in goals %}
             <article class="goal-card">
                 <div class="goal-card-header">
                     <div>
-                        <p class="eyebrow">Savings goal</p>
+                        <p class="eyebrow">Goal {{ loop.index }}</p>
                         <h2>{{ goal.title }}</h2>
+                        <p class="muted">
+                            {% if goal.description %}
+                                {{ goal.description }}
+                            {% else %}
+                                No description added yet.
+                            {% endif %}
+                        </p>
                     </div>
-                    <span class="pill">{{ goal.progressPercentage }}%</span>
+                    <div class="goal-status">
+                        <span class="pill">{{ goal.progressPercentage }}%</span>
+                        <span class="status-note">
+                            {% if goal.targetDate %}
+                                Target date: {{ goal.targetDate }}
+                            {% else %}
+                                No target date
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
 
-                <p class="muted">
-                    {{ goal.description if goal.description else "No description added yet." }}
-                </p>
-
-                <div class="metric-grid">
-                    <div>
-                        <span>Target</span>
-                        <strong>{{ goal.targetAmount | currency }}</strong>
-                    </div>
-                    <div>
-                        <span>Saved</span>
+                <div class="summary-band">
+                    <div class="summary-item emphasis-item">
+                        <span>Saved so far</span>
                         <strong>{{ goal.totalSaved | currency }}</strong>
                     </div>
-                    <div>
-                        <span>Remaining</span>
+                    <div class="summary-item">
+                        <span>Goal target</span>
+                        <strong>{{ goal.targetAmount | currency }}</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Left to save</span>
                         <strong>{{ goal.remainingAmount | currency }}</strong>
                     </div>
-                    <div>
-                        <span>Recurring</span>
+                    <div class="summary-item">
+                        <span>Current pace</span>
+                        <strong>{{ goal.monthlySavingRate | currency }}/mo</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Recurring plan</span>
                         <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
                     </div>
                 </div>
 
-                <div class="progress-track">
-                    <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+                <div class="progress-block">
+                    <div class="progress-label-row">
+                        <strong>Progress bar</strong>
+                        <span>{{ goal.visualProgressPercentage }}% visual progress</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+                    </div>
+                    <p class="progress-label">
+                        {{ goal.totalSaved | currency }} saved out of {{ goal.targetAmount | currency }}
+                    </p>
                 </div>
-                <p class="progress-label">
-                    {{ goal.totalSaved | currency }} saved of {{ goal.targetAmount | currency }}
-                </p>
 
-                <dl class="info-list">
-                    <div>
-                        <dt>Target date</dt>
-                        <dd>{{ goal.targetDate if goal.targetDate else "Not set" }}</dd>
+                <div class="insight-grid">
+                    <div class="insight-card">
+                        <span class="insight-label">Estimated completion</span>
+                        <p>{{ goal.estimateText }}</p>
                     </div>
-                    <div>
-                        <dt>Estimate</dt>
-                        <dd>{{ goal.estimateText }}</dd>
+                    <div class="insight-card accent-card">
+                        <span class="insight-label">Recommendation</span>
+                        <p>{{ goal.recommendation }}</p>
                     </div>
-                    <div>
-                        <dt>Recommendation</dt>
-                        <dd>{{ goal.recommendation }}</dd>
-                    </div>
-                </dl>
+                </div>
 
                 <div class="card-actions">
-                    <a class="button-link" href="{{ url_for('goal_detail', goal_id=goal.id) }}">View details</a>
+                    <a class="button-link" href="{{ url_for('goal_detail', goal_id=goal.id) }}">Open goal details</a>
                     <form action="{{ url_for('delete_goal_route', goal_id=goal.id) }}" method="post">
-                        <button type="submit" class="danger-button">Delete</button>
+                        <button type="submit" class="danger-button">Delete goal</button>
                     </form>
                 </div>
             </article>
@@ -138,10 +185,10 @@ PUT /api/goals/&lt;id&gt;/recurring-plan</code></pre>
 {% else %}
     <section class="panel empty-state">
         <p class="eyebrow">No goals yet</p>
-        <h2>Start with one simple target.</h2>
-        <p>
-            Create a goal such as “Vacation”, “New Laptop”, or “Emergency Fund”.
-            Once you add contributions, the dashboard will calculate progress and recommendations automatically.
+        <h2>Create your first savings goal</h2>
+        <p class="section-copy">
+            After creating a goal, the dashboard will show saved amount, remaining amount,
+            progress percentage, estimate, and recommendation in one place.
         </p>
     </section>
 {% endif %}
