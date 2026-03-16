@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}{{ goal.title }} | SaveSprint API{% endblock %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <p class="eyebrow">Goal details</p>
+        <h1>{{ goal.title }}</h1>
+        <p class="hero-copy">
+            {{ goal.description if goal.description else "This goal does not have a description yet." }}
+        </p>
+    </div>
+    <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+</section>
+
+<section class="panel detail-summary">
+    <div class="summary-top">
+        <div>
+            <span class="eyebrow">Main summary</span>
+            <h2>{{ goal.progressPercentage }}% complete</h2>
+        </div>
+        <span class="pill">{{ goal.contributionCount }} entries</span>
+    </div>
+
+    <div class="metric-grid">
+        <div>
+            <span>Target amount</span>
+            <strong>{{ goal.targetAmount | currency }}</strong>
+        </div>
+        <div>
+            <span>Saved amount</span>
+            <strong>{{ goal.totalSaved | currency }}</strong>
+        </div>
+        <div>
+            <span>Remaining amount</span>
+            <strong>{{ goal.remainingAmount | currency }}</strong>
+        </div>
+        <div>
+            <span>Recurring contribution</span>
+            <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
+        </div>
+    </div>
+
+    <div class="progress-track large-track">
+        <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+    </div>
+
+    <dl class="info-list">
+        <div>
+            <dt>Target date</dt>
+            <dd>{{ goal.targetDate if goal.targetDate else "Not set" }}</dd>
+        </div>
+        <div>
+            <dt>Estimated completion</dt>
+            <dd>{{ goal.estimateText }}</dd>
+        </div>
+        <div>
+            <dt>Recommendation</dt>
+            <dd>{{ goal.recommendation }}</dd>
+        </div>
+    </dl>
+</section>
+
+<section class="detail-grid">
+    <article class="panel">
+        <p class="eyebrow">Manual contribution</p>
+        <h2>Add deposit</h2>
+        <form action="{{ url_for('add_contribution_route', goal_id=goal.id) }}" method="post" class="stack-form">
+            <input type="hidden" name="type" value="manual">
+            <label>
+                Amount
+                <input type="number" name="amount" min="0.01" step="0.01" placeholder="20" required>
+            </label>
+            <label>
+                Date
+                <input type="date" name="date" value="{{ today_iso }}">
+            </label>
+            <label>
+                Note
+                <input type="text" name="note" placeholder="Weekend savings">
+            </label>
+            <button type="submit">Add contribution</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <p class="eyebrow">Recurring plan</p>
+        <h2>Weekly or monthly savings</h2>
+        <form action="{{ url_for('recurring_plan_route', goal_id=goal.id) }}" method="post" class="stack-form">
+            <label>
+                Amount
+                <input
+                    type="number"
+                    name="amount"
+                    min="0.01"
+                    step="0.01"
+                    value="{{ goal.recurringPlan.amount if goal.recurringPlan else '' }}"
+                    placeholder="50"
+                    required
+                >
+            </label>
+            <label>
+                Frequency
+                <select name="frequency" required>
+                    <option value="weekly" {% if goal.recurringPlan and goal.recurringPlan.frequency == "weekly" %}selected{% endif %}>Weekly</option>
+                    <option value="monthly" {% if not goal.recurringPlan or goal.recurringPlan.frequency == "monthly" %}selected{% endif %}>Monthly</option>
+                </select>
+            </label>
+            <label>
+                Start date
+                <input
+                    type="date"
+                    name="startDate"
+                    value="{{ goal.recurringPlan.startDate if goal.recurringPlan else today_iso }}"
+                >
+            </label>
+            <label>
+                Status
+                <select name="isActive">
+                    <option value="true" {% if not goal.recurringPlan or goal.recurringPlan.isActive %}selected{% endif %}>Active</option>
+                    <option value="false" {% if goal.recurringPlan and not goal.recurringPlan.isActive %}selected{% endif %}>Paused</option>
+                </select>
+            </label>
+            <button type="submit">Save recurring plan</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <p class="eyebrow">Edit goal</p>
+        <h2>Update target details</h2>
+        <form action="{{ url_for('update_goal_route', goal_id=goal.id) }}" method="post" class="stack-form">
+            <label>
+                Goal title
+                <input type="text" name="title" value="{{ goal.title }}" required>
+            </label>
+            <label>
+                Target amount
+                <input type="number" name="targetAmount" min="0.01" step="0.01" value="{{ goal.targetAmount }}" required>
+            </label>
+            <label>
+                Description
+                <textarea name="description" rows="3">{{ goal.description }}</textarea>
+            </label>
+            <label>
+                Target date
+                <input type="date" name="targetDate" value="{{ goal.targetDate if goal.targetDate else '' }}">
+            </label>
+            <button type="submit">Update goal</button>
+        </form>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="table-header">
+        <div>
+            <p class="eyebrow">Contribution history</p>
+            <h2>All saved entries</h2>
+        </div>
+    </div>
+
+    {% if goal.contributions %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Note</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contribution in goal.contributions %}
+                        <tr>
+                            <td>{{ contribution.date }}</td>
+                            <td>{{ contribution.amount | currency }}</td>
+                            <td><span class="type-badge">{{ contribution.type }}</span></td>
+                            <td>{{ contribution.note if contribution.note else "No note" }}</td>
+                            <td class="table-action">
+                                {% if contribution.type == "manual" %}
+                                    <form action="{{ url_for('delete_contribution_route', contribution_id=contribution.id) }}" method="post">
+                                        <input type="hidden" name="goal_id" value="{{ goal.id }}">
+                                        <button type="submit" class="text-button">Delete</button>
+                                    </form>
+                                {% else %}
+                                    <span class="muted">Generated</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="muted">No contributions added yet.</p>
+    {% endif %}
+</section>
+{% endblock %}
