@@ -1,195 +1,203 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard | SaveSprint API{% endblock %}
-{% block page_kicker %}Dashboard{% endblock %}
-{% block page_banner_title %}All savings goals in one clear view{% endblock %}
-{% block page_banner_note %}
-    This page answers four questions immediately: what the goal is, how much is saved, how much is left, and when the goal may be reached.
-{% endblock %}
+{% block page_banner_title %}Savings Dashboard{% endblock %}
 
 {% block content %}
-<section class="dashboard-layout">
-    <aside class="panel form-panel">
-        <p class="eyebrow">Create a new goal</p>
-        <h2>Add a savings target</h2>
-        <p class="section-copy">
-            Start with one goal such as a trip, laptop, or emergency fund.
-        </p>
-        <form action="{{ url_for('create_goal_route') }}" method="post" class="stack-form">
-            <label>
-                Goal title
-                <input type="text" name="title" placeholder="Trip to Italy" required>
-            </label>
-            <label>
-                Target amount
-                <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
-            </label>
-            <label>
-                Description
-                <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
-            </label>
-            <label>
-                Target date
-                <input type="date" name="targetDate">
-            </label>
-            <button type="submit">Create goal</button>
-        </form>
+<section class="desk-layout">
+    <aside class="nav-pane">
+        <div class="pane-head">Navigation</div>
+        <div class="nav-scroll">
+            <a class="tree-item active-item" href="{{ url_for('dashboard') }}">
+                <i data-lucide="house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="tree-group">
+                <div class="tree-group-title">
+                    <i data-lucide="piggy-bank"></i>
+                    <span>Savings Goals</span>
+                </div>
+                {% if goals %}
+                    {% for goal in goals %}
+                        <a class="tree-subitem" href="{{ url_for('goal_detail', goal_id=goal.id) }}">
+                            <i data-lucide="flag"></i>
+                            <span>{{ goal.title }}</span>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="tree-note">No goals created yet.</div>
+                {% endif %}
+            </div>
+
+            <div class="tree-group">
+                <div class="tree-group-title">
+                    <i data-lucide="wallet-cards"></i>
+                    <span>Dashboard Totals</span>
+                </div>
+                <div class="tree-note">Saved: {{ overview.totalSaved | currency }}</div>
+                <div class="tree-note">Target: {{ overview.totalTarget | currency }}</div>
+                <div class="tree-note">Goals: {{ overview.goalCount }}</div>
+                <div class="tree-note">Average progress: {{ overview.averageProgress }}%</div>
+            </div>
+        </div>
     </aside>
 
-    <div class="dashboard-main">
-        <article class="panel">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">Quick overview</p>
-                    <h2>What the dashboard shows</h2>
-                </div>
-                <p class="section-copy compact-copy">
-                    Each card below shows the goal name, saved amount, remaining amount, current pace,
-                    expected completion time, and a short recommendation.
-                </p>
+    <div class="desk-content">
+        <section class="summary-strip">
+            <div class="summary-chip">
+                <span>Total Goals</span>
+                <strong>{{ overview.goalCount }}</strong>
             </div>
+            <div class="summary-chip">
+                <span>Total Target</span>
+                <strong>{{ overview.totalTarget | currency }}</strong>
+            </div>
+            <div class="summary-chip">
+                <span>Total Saved</span>
+                <strong>{{ overview.totalSaved | currency }}</strong>
+            </div>
+            <div class="summary-chip">
+                <span>Average Progress</span>
+                <strong>{{ overview.averageProgress }}%</strong>
+            </div>
+        </section>
 
-            <div class="overview-grid">
-                <div class="stat-card">
-                    <span>Total goals</span>
-                    <strong>{{ overview.goalCount }}</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Total target</span>
-                    <strong>{{ overview.totalTarget | currency }}</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Total saved</span>
-                    <strong>{{ overview.totalSaved | currency }}</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Average progress</span>
-                    <strong>{{ overview.averageProgress }}%</strong>
-                </div>
-            </div>
-        </article>
+        <section class="desk-panels">
+            <article class="desk-panel desk-panel-wide">
+                <div class="desk-panel-head">Savings Goals Overview</div>
+                {% if goals %}
+                    <div class="table-wrapper">
+                        <table class="finance-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Target</th>
+                                    <th>Saved</th>
+                                    <th>Remaining</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals %}
+                                    <tr>
+                                        <td>
+                                            <a class="table-link" href="{{ url_for('goal_detail', goal_id=goal.id) }}">
+                                                {{ goal.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ goal.targetAmount | currency }}</td>
+                                        <td>{{ goal.totalSaved | currency }}</td>
+                                        <td>{{ goal.remainingAmount | currency }}</td>
+                                        <td>{{ goal.progressPercentage }}%</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="panel-empty">Create a goal to populate the dashboard table.</div>
+                {% endif %}
+            </article>
 
-        <article class="panel guide-panel">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">How to read each goal</p>
-                    <h2>Presentation-friendly structure</h2>
-                </div>
-            </div>
-            <div class="guide-grid">
-                <div class="guide-item">
-                    <strong>Saved so far</strong>
-                    <p>The amount already collected for the goal.</p>
-                </div>
-                <div class="guide-item">
-                    <strong>Left to save</strong>
-                    <p>The money still needed to reach the target amount.</p>
-                </div>
-                <div class="guide-item">
-                    <strong>Estimated finish</strong>
-                    <p>A forecast based on the recurring plan and recent deposits.</p>
-                </div>
-                <div class="guide-item">
-                    <strong>Recommendation</strong>
-                    <p>A simple message that tells the user whether progress looks strong or weak.</p>
-                </div>
-            </div>
-        </article>
+            <article class="desk-panel">
+                <div class="desk-panel-head">Goal Progress</div>
+                {% if goals %}
+                    <div class="bar-list">
+                        {% for goal in goals[:5] %}
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span>{{ goal.title }}</span>
+                                    <strong>{{ goal.progressPercentage }}%</strong>
+                                </div>
+                                <div class="mini-track">
+                                    <div class="mini-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="panel-empty">No progress data yet.</div>
+                {% endif %}
+            </article>
+
+            <article class="desk-panel" id="create-goal">
+                <div class="desk-panel-head">Create New Goal</div>
+                <form action="{{ url_for('create_goal_route') }}" method="post" class="stack-form compact-form">
+                    <label>
+                        Goal title
+                        <input type="text" name="title" placeholder="Trip to Italy" required>
+                    </label>
+                    <label>
+                        Target amount
+                        <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
+                    </label>
+                    <label>
+                        Description
+                        <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
+                    </label>
+                    <label>
+                        Target date
+                        <input type="date" name="targetDate">
+                    </label>
+                    <button type="submit">Add Goal</button>
+                </form>
+            </article>
+
+            <article class="desk-panel">
+                <div class="desk-panel-head">Target Dates</div>
+                {% if goals %}
+                    <div class="table-wrapper">
+                        <table class="finance-table compact-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Target Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals[:6] %}
+                                    <tr>
+                                        <td>{{ goal.title }}</td>
+                                        <td>{{ goal.targetDate if goal.targetDate else "Not set" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="panel-empty">No target dates available.</div>
+                {% endif %}
+            </article>
+
+            <article class="desk-panel desk-panel-wide">
+                <div class="desk-panel-head">Goal Recommendations</div>
+                {% if goals %}
+                    <div class="table-wrapper">
+                        <table class="finance-table">
+                            <thead>
+                                <tr>
+                                    <th>Goal</th>
+                                    <th>Estimate</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals %}
+                                    <tr>
+                                        <td>{{ goal.title }}</td>
+                                        <td>{{ goal.estimateText }}</td>
+                                        <td>{{ goal.recommendation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="panel-empty">Recommendations will appear after goals are added.</div>
+                {% endif %}
+            </article>
+        </section>
     </div>
 </section>
-
-{% if goals %}
-    <section class="goal-list">
-        {% for goal in goals %}
-            <article class="goal-card">
-                <div class="goal-card-header">
-                    <div>
-                        <p class="eyebrow">Goal {{ loop.index }}</p>
-                        <h2>{{ goal.title }}</h2>
-                        <p class="muted">
-                            {% if goal.description %}
-                                {{ goal.description }}
-                            {% else %}
-                                No description added yet.
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="goal-status">
-                        <span class="pill">{{ goal.progressPercentage }}%</span>
-                        <span class="status-note">
-                            {% if goal.targetDate %}
-                                Target date: {{ goal.targetDate }}
-                            {% else %}
-                                No target date
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="summary-band">
-                    <div class="summary-item emphasis-item">
-                        <span>Saved so far</span>
-                        <strong>{{ goal.totalSaved | currency }}</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Goal target</span>
-                        <strong>{{ goal.targetAmount | currency }}</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Left to save</span>
-                        <strong>{{ goal.remainingAmount | currency }}</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Current pace</span>
-                        <strong>{{ goal.monthlySavingRate | currency }}/mo</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Recurring plan</span>
-                        <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
-                    </div>
-                </div>
-
-                <div class="progress-block">
-                    <div class="progress-label-row">
-                        <strong>Progress bar</strong>
-                        <span>{{ goal.visualProgressPercentage }}% visual progress</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
-                    </div>
-                    <p class="progress-label">
-                        {{ goal.totalSaved | currency }} saved out of {{ goal.targetAmount | currency }}
-                    </p>
-                </div>
-
-                <div class="insight-grid">
-                    <div class="insight-card">
-                        <span class="insight-label">Estimated completion</span>
-                        <p>{{ goal.estimateText }}</p>
-                    </div>
-                    <div class="insight-card accent-card">
-                        <span class="insight-label">Recommendation</span>
-                        <p>{{ goal.recommendation }}</p>
-                    </div>
-                </div>
-
-                <div class="card-actions">
-                    <a class="button-link" href="{{ url_for('goal_detail', goal_id=goal.id) }}">Open goal details</a>
-                    <form action="{{ url_for('delete_goal_route', goal_id=goal.id) }}" method="post">
-                        <button type="submit" class="danger-button">Delete goal</button>
-                    </form>
-                </div>
-            </article>
-        {% endfor %}
-    </section>
-{% else %}
-    <section class="panel empty-state">
-        <p class="eyebrow">No goals yet</p>
-        <h2>Create your first savings goal</h2>
-        <p class="section-copy">
-            After creating a goal, the dashboard will show saved amount, remaining amount,
-            progress percentage, estimate, and recommendation in one place.
-        </p>
-    </section>
-{% endif %}
 {% endblock %}

@@ -6,42 +6,51 @@
     <title>{% block title %}SaveSprint API{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="page-shell">
-        <header class="site-header">
-            <div class="brand-wrap">
-                <a class="brand" href="{{ url_for('dashboard') }}">
-                    <span class="brand-mark">S</span>
-                    <span class="brand-text">
-                        <small>Student MVP</small>
-                        <strong>SaveSprint</strong>
-                    </span>
-                </a>
-                <p class="header-copy">
-                    Savings goal tracker with clear progress, estimate, and recommendation blocks.
-                </p>
+    <div class="app-shell">
+        <header class="app-chrome">
+            <div class="title-strip">
+                <div class="traffic-lights" aria-hidden="true">
+                    <span class="light light-red"></span>
+                    <span class="light light-yellow"></span>
+                    <span class="light light-green"></span>
+                </div>
+                <div class="window-caption">SaveSprint Savings Manager</div>
+                <div class="window-actions" aria-hidden="true">
+                    <span>-</span>
+                    <span>[]</span>
+                    <span>x</span>
+                </div>
             </div>
-            <nav class="site-nav">
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="/api/goals" target="_blank" rel="noreferrer">API JSON</a>
-                <a href="/api/health" target="_blank" rel="noreferrer">Health</a>
-            </nav>
-        </header>
 
-        <section class="context-banner">
-            <div>
-                <p class="eyebrow">{% block page_kicker %}Savings Goal Tracker{% endblock %}</p>
-                <h1 class="banner-title">{% block page_banner_title %}Simple savings planning prototype{% endblock %}</h1>
+            <div class="menu-strip">
+                <span class="menu-item">File</span>
+                <span class="menu-item">Goals</span>
+                <span class="menu-item">Tools</span>
+                <span class="menu-item">View</span>
+                <span class="menu-item">Help</span>
             </div>
-            <p class="banner-copy">
-                {% block page_banner_note %}
-                    Create a goal, add savings, and immediately see how close you are to your target.
-                {% endblock %}
-            </p>
-        </section>
+
+            <div class="toolbar-strip">
+                <a class="toolbar-button" href="{{ url_for('dashboard') }}" title="Dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                </a>
+                <a class="toolbar-button" href="#create-goal" title="Create goal">
+                    <i data-lucide="circle-plus"></i>
+                </a>
+                <a class="toolbar-button" href="/api/goals" target="_blank" rel="noreferrer" title="Open API JSON">
+                    <i data-lucide="database"></i>
+                </a>
+                <a class="toolbar-button" href="/api/health" target="_blank" rel="noreferrer" title="Health check">
+                    <i data-lucide="shield-check"></i>
+                </a>
+                <span class="toolbar-separator" aria-hidden="true"></span>
+                <span class="toolbar-label">{% block page_banner_title %}Savings Dashboard{% endblock %}</span>
+            </div>
+        </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -53,9 +62,16 @@
             {% endif %}
         {% endwith %}
 
-        <main>
+        <main class="workspace-main">
             {% block content %}{% endblock %}
         </main>
     </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    </script>
 </body>
 </html>
