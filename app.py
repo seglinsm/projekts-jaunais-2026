@@ -40,7 +40,7 @@ def _login_required(view):
 
 
 def create_app(test_config=None):
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="templates", static_folder="static")
     app.config.update(
         SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "development-secret-key"),
         DATABASE=str(DEFAULT_DATABASE),
@@ -155,4 +155,5 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    print("Open http://127.0.0.1:5000/ in your browser. Do not open files inside templates/ directly.")
     app.run(debug=True)

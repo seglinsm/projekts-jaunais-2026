@@ -102,6 +102,17 @@ class GoalBloomTests(unittest.TestCase):
         self.assertEqual(row[1], 425.0)
         self.assertEqual(row[2], 125.0)
 
+    def test_rendered_dashboard_contains_no_raw_jinja_tokens(self):
+        self._register_and_login()
+
+        response = self.client.get("/dashboard")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("{{", html)
+        self.assertNotIn("{%", html)
+        self.assertIn("/static/style.css", html)
+
     def _register_and_login(self):
         self.client.post(
             "/register",
