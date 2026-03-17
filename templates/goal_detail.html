@@ -1,79 +1,79 @@
 {% extends "base.html" %}
 
 {% block title %}{{ goal.title }} | SaveSprint API{% endblock %}
-{% block page_kicker %}Goal Details{% endblock %}
+{% block page_kicker %}Mērķa detaļas{% endblock %}
 {% block page_banner_title %}{{ goal.title }}{% endblock %}
 {% block page_banner_note %}
-    This page focuses on one goal only: current progress, estimated finish, recommendation, and the forms for adding new savings activity.
+    Šī lapa koncentrējas uz vienu mērķi: pašreizējo progresu, paredzamo pabeigšanu, ieteikumu un formām jaunu uzkrājumu aktivitāšu pievienošanai.
 {% endblock %}
 
 {% block content %}
 <section class="detail-topbar">
-    <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+    <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Atpakaļ uz paneli</a>
     <div class="detail-topbar-meta">
-        <span class="status-note">Target date: {{ goal.targetDate if goal.targetDate else "Not set" }}</span>
-        <span class="status-note">Entries: {{ goal.contributionCount }}</span>
+        <span class="status-note">Mērķa datums: {{ goal.targetDate if goal.targetDate else "Nav iestatīts" }}</span>
+        <span class="status-note">Ieraksti: {{ goal.contributionCount }}</span>
     </div>
 </section>
 
 <section class="panel focus-panel">
     <div class="section-heading">
         <div>
-            <p class="eyebrow">Current goal status</p>
-            <h2>{{ goal.progressPercentage }}% complete</h2>
+            <p class="eyebrow">Pašreizējais mērķa statuss</p>
+            <h2>{{ goal.progressPercentage }}% pabeigts</h2>
         </div>
         <p class="section-copy compact-copy">
             {% if goal.description %}
                 {{ goal.description }}
             {% else %}
-                No description added yet.
+                Apraksts vēl nav pievienots.
             {% endif %}
         </p>
     </div>
 
     <div class="summary-band">
         <div class="summary-item emphasis-item">
-            <span>Saved so far</span>
+            <span>Uzkrāts līdz šim</span>
             <strong>{{ goal.totalSaved | currency }}</strong>
         </div>
         <div class="summary-item">
-            <span>Target amount</span>
+            <span>Mērķa summa</span>
             <strong>{{ goal.targetAmount | currency }}</strong>
         </div>
         <div class="summary-item">
-            <span>Remaining amount</span>
+            <span>Atlikusī summa</span>
             <strong>{{ goal.remainingAmount | currency }}</strong>
         </div>
         <div class="summary-item">
-            <span>Recurring plan</span>
+            <span>Regulārais plāns</span>
             <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
         </div>
         <div class="summary-item">
-            <span>Current pace</span>
+            <span>Pašreizējais temps</span>
             <strong>{{ goal.monthlySavingRate | currency }}/mo</strong>
         </div>
     </div>
 
     <div class="progress-block">
         <div class="progress-label-row">
-            <strong>Progress bar</strong>
-            <span>{{ goal.visualProgressPercentage }}% visual progress</span>
+            <strong>Progresa josla</strong>
+            <span>{{ goal.visualProgressPercentage }}% vizuālais progress</span>
         </div>
         <div class="progress-track large-track">
             <div class="progress-fill" style="width: {{ goal.visualProgressPercentage }}%"></div>
         </div>
         <p class="progress-label">
-            {{ goal.totalSaved | currency }} saved out of {{ goal.targetAmount | currency }}
+            {{ goal.totalSaved | currency }} uzkrāts no {{ goal.targetAmount | currency }}
         </p>
     </div>
 
     <div class="insight-grid">
         <div class="insight-card">
-            <span class="insight-label">Estimated completion</span>
+            <span class="insight-label">Paredzamā pabeigšana</span>
             <p>{{ goal.estimateText }}</p>
         </div>
         <div class="insight-card accent-card">
-            <span class="insight-label">Recommendation</span>
+            <span class="insight-label">Ieteikums</span>
             <p>{{ goal.recommendation }}</p>
         </div>
     </div>
@@ -81,38 +81,38 @@
 
 <section class="workbench-grid">
     <article class="panel action-panel">
-        <p class="eyebrow">Step 1</p>
-        <h2>Add a one-time deposit</h2>
+        <p class="eyebrow">Solis 1</p>
+        <h2>Pievienot vienreizēju iemaksu</h2>
         <p class="section-copy">
-            Use this form when the user manually saves money.
+            Izmantojiet šo formu, kad lietotājs manuāli veic uzkrājumu.
         </p>
         <form action="{{ url_for('add_contribution_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <input type="hidden" name="type" value="manual">
             <label>
-                Amount
+                Summa
                 <input type="number" name="amount" min="0.01" step="0.01" placeholder="20" required>
             </label>
             <label>
-                Date
+                Datums
                 <input type="date" name="date" value="{{ today_iso }}">
             </label>
             <label>
-                Note
-                <input type="text" name="note" placeholder="Weekend savings">
+                Piezīme
+                <input type="text" name="note" placeholder="Nedēļas nogales uzkrājums">
             </label>
-            <button type="submit">Add contribution</button>
+            <button type="submit">Pievienot iemaksu</button>
         </form>
     </article>
 
     <article class="panel action-panel">
-        <p class="eyebrow">Step 2</p>
-        <h2>Set the recurring plan</h2>
+        <p class="eyebrow">Solis 2</p>
+        <h2>Iestatīt regulāro plānu</h2>
         <p class="section-copy">
-            Weekly or monthly savings are used to estimate when the goal may be completed.
+            Nedēļā or monthly savings are used to estimate when the goal may be pabeigtsd.
         </p>
         <form action="{{ url_for('recurring_plan_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <label>
-                Amount
+                Summa
                 <input
                     type="number"
                     name="amount"
@@ -124,14 +124,14 @@
                 >
             </label>
             <label>
-                Frequency
+                Biežums
                 <select name="frequency" required>
-                    <option value="weekly" {% if goal.recurringPlan and goal.recurringPlan.frequency == "weekly" %}selected{% endif %}>Weekly</option>
-                    <option value="monthly" {% if not goal.recurringPlan or goal.recurringPlan.frequency == "monthly" %}selected{% endif %}>Monthly</option>
+                    <option value="weekly" {% if goal.recurringPlan and goal.recurringPlan.frequency == "weekly" %}selected{% endif %}>Nedēļā</option>
+                    <option value="monthly" {% if not goal.recurringPlan or goal.recurringPlan.frequency == "monthly" %}selected{% endif %}>Mēnesī</option>
                 </select>
             </label>
             <label>
-                Start date
+                Sākuma datums
                 <input
                     type="date"
                     name="startDate"
@@ -139,40 +139,40 @@
                 >
             </label>
             <label>
-                Status
+                Statuss
                 <select name="isActive">
-                    <option value="true" {% if not goal.recurringPlan or goal.recurringPlan.isActive %}selected{% endif %}>Active</option>
-                    <option value="false" {% if goal.recurringPlan and not goal.recurringPlan.isActive %}selected{% endif %}>Paused</option>
+                    <option value="true" {% if not goal.recurringPlan or goal.recurringPlan.isActive %}selected{% endif %}>Aktīvs</option>
+                    <option value="false" {% if goal.recurringPlan and not goal.recurringPlan.isActive %}selected{% endif %}>Apturēts</option>
                 </select>
             </label>
-            <button type="submit">Save recurring plan</button>
+            <button type="submit">Saglabāt regulāro plānu</button>
         </form>
     </article>
 
     <article class="panel action-panel">
-        <p class="eyebrow">Step 3</p>
-        <h2>Edit the goal information</h2>
+        <p class="eyebrow">Solis 3</p>
+        <h2>Rediģēt mērķa informāciju</h2>
         <p class="section-copy">
-            Update the name, description, target amount, or target date.
+            Atjauniniet nosaukumu, aprakstu, mērķa summu vai mērķa datumu.
         </p>
         <form action="{{ url_for('update_goal_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <label>
-                Goal title
+                Mērķa nosaukums
                 <input type="text" name="title" value="{{ goal.title }}" required>
             </label>
             <label>
-                Target amount
+                Mērķa summa
                 <input type="number" name="targetAmount" min="0.01" step="0.01" value="{{ goal.targetAmount }}" required>
             </label>
             <label>
-                Description
+                Apraksts
                 <textarea name="description" rows="3">{{ goal.description }}</textarea>
             </label>
             <label>
-                Target date
+                Mērķa datums
                 <input type="date" name="targetDate" value="{{ goal.targetDate if goal.targetDate else '' }}">
             </label>
-            <button type="submit">Update goal</button>
+            <button type="submit">Atjaunināt mērķi</button>
         </form>
     </article>
 </section>
@@ -180,11 +180,11 @@
 <section class="panel history-panel">
     <div class="section-heading">
         <div>
-            <p class="eyebrow">Contribution history</p>
-            <h2>All savings entries for this goal</h2>
+            <p class="eyebrow">Iemaksu vēsture</p>
+            <h2>Visi šī mērķa uzkrājumu ieraksti</h2>
         </div>
         <p class="section-copy compact-copy">
-            Manual contributions can be deleted. Recurring rows are generated automatically from the recurring plan.
+            Manuālās iemaksas var dzēst. Regulārās rindas tiek ģenerētas automātiski no regulārā plāna.
         </p>
     </div>
 
@@ -193,10 +193,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Type</th>
-                        <th>Note</th>
+                        <th>Datums</th>
+                        <th>Summa</th>
+                        <th>Veids</th>
+                        <th>Piezīme</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -206,15 +206,15 @@
                             <td>{{ contribution.date }}</td>
                             <td>{{ contribution.amount | currency }}</td>
                             <td><span class="type-badge">{{ contribution.type }}</span></td>
-                            <td>{{ contribution.note if contribution.note else "No note" }}</td>
+                            <td>{{ contribution.note if contribution.note else "Nav piezīmes" }}</td>
                             <td class="table-action">
                                 {% if contribution.type == "manual" %}
                                     <form action="{{ url_for('delete_contribution_route', contribution_id=contribution.id) }}" method="post">
                                         <input type="hidden" name="goal_id" value="{{ goal.id }}">
-                                        <button type="submit" class="text-button">Delete</button>
+                                        <button type="submit" class="text-button">Dzēst</button>
                                     </form>
                                 {% else %}
-                                    <span class="muted">Generated</span>
+                                    <span class="muted">Ģenerēts</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -223,7 +223,7 @@
             </table>
         </div>
     {% else %}
-        <p class="muted">No contributions added yet.</p>
+        <p class="muted">Iemaksas vēl nav pievienotas.</p>
     {% endif %}
 </section>
 {% endblock %}

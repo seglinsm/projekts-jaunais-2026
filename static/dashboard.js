@@ -2,7 +2,7 @@
     const demoGoals = [
         {
             id: 101,
-            title: "Trip to Italy",
+            title: "Ceļojums uz Itāliju",
             targetAmount: 500,
             totalSaved: 180,
             remainingAmount: 320,
@@ -11,12 +11,12 @@
             monthlySavingRate: 70,
             recurringContributionAmount: 50,
             targetDate: "2026-08-15",
-            estimateText: "At your current pace, you may reach this goal in 5 months.",
-            recommendation: "You are on a steady path toward your goal.",
+            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 5 mēnešos.",
+            recommendation: "Jūs stabili virzāties uz savu mērķi.",
         },
         {
             id: 102,
-            title: "New Laptop",
+            title: "Jauns klēpjdators",
             targetAmount: 1200,
             totalSaved: 420,
             remainingAmount: 780,
@@ -25,12 +25,12 @@
             monthlySavingRate: 110,
             recurringContributionAmount: 100,
             targetDate: "2026-11-30",
-            estimateText: "At your current pace, you may reach this goal in 8 months.",
-            recommendation: "You are on a steady path toward your goal.",
+            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 8 mēnešos.",
+            recommendation: "Jūs stabili virzāties uz savu mērķi.",
         },
         {
             id: 103,
-            title: "Emergency Fund",
+            title: "Drošības fonds",
             targetAmount: 1000,
             totalSaved: 250,
             remainingAmount: 750,
@@ -39,12 +39,12 @@
             monthlySavingRate: 60,
             recurringContributionAmount: 40,
             targetDate: "2026-12-31",
-            estimateText: "At your current pace, you may reach this goal in 13 months.",
-            recommendation: "Consider increasing your regular contribution to reach your goal faster.",
+            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 13 mēnešos.",
+            recommendation: "Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk.",
         },
         {
             id: 104,
-            title: "Vacation Apartment Deposit",
+            title: "Brīvdienu dzīvokļa pirmā iemaksa",
             targetAmount: 2500,
             totalSaved: 900,
             remainingAmount: 1600,
@@ -53,24 +53,24 @@
             monthlySavingRate: 180,
             recurringContributionAmount: 150,
             targetDate: "2026-09-10",
-            estimateText: "At your current pace, you may reach this goal in 9 months.",
-            recommendation: "You are ahead of schedule.",
+            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 9 mēnešos.",
+            recommendation: "Jūs esat priekšā plānam.",
         },
     ];
 
-    const currencyFormatter = new Intl.NumberFormat("en-US", {
+    const currencyFormatter = new Intl.NumberFormat("lv-LV", {
         style: "currency",
         currency: "EUR",
         minimumFractionDigits: 2,
     });
 
-    const fullDateFormatter = new Intl.DateTimeFormat("en-US", {
+    const fullDateFormatter = new Intl.DateTimeFormat("lv-LV", {
         year: "numeric",
         month: "long",
         day: "numeric",
     });
 
-    const shortMonthFormatter = new Intl.DateTimeFormat("en-US", {
+    const shortMonthFormatter = new Intl.DateTimeFormat("lv-LV", {
         year: "numeric",
         month: "long",
     });
@@ -131,10 +131,10 @@
         const todayLabel = document.getElementById("todayLabel");
 
         metricStrip.innerHTML = [
-            ["Total target", formatCurrency(overview.totalTarget)],
-            ["Saved so far", formatCurrency(overview.totalSaved)],
-            ["Remaining", formatCurrency(overview.totalRemaining)],
-            ["Average progress", `${overview.averageProgress.toFixed(1)}%`],
+            ["Kopējais mērķis", formatCurrency(overview.totalTarget)],
+            ["Uzkrāts līdz šim", formatCurrency(overview.totalSaved)],
+            ["Atlicis", formatCurrency(overview.totalRemaining)],
+            ["Vidējais progress", `${overview.averageProgress.toFixed(1)}%`],
         ]
             .map(
                 ([label, value]) => `
@@ -159,7 +159,7 @@
             monthDisplay.textContent = shortMonthFormatter.format(new Date(Number(year), Number(month) - 1, 1));
         });
 
-        modeBadge.textContent = mode === "live" ? "Live API mode" : "Demo preview mode";
+        modeBadge.textContent = mode === "live" ? "Tiešsaistes API režīms" : "Demo priekšskatījuma režīms";
         modeBadge.className = `mode-box ${mode === "live" ? "mode-live" : "mode-demo"}`;
     }
 
@@ -167,7 +167,7 @@
         const sidebarGoals = document.getElementById("sidebarGoals");
 
         if (!goals.length) {
-            sidebarGoals.innerHTML = `<div class="sidebar-goal"><div class="sidebar-goal-meta">No goals available yet.</div></div>`;
+            sidebarGoals.innerHTML = `<div class="sidebar-goal"><div class="sidebar-goal-meta">Vēl nav pieejamu mērķu.</div></div>`;
             return;
         }
 
@@ -200,7 +200,7 @@
                         <div class="goal-progress-top">
                             <div>
                                 <div class="goal-progress-title">${goal.title}</div>
-                                <div class="goal-progress-meta">${goal.estimateText || "No estimate yet."}</div>
+                                <div class="goal-progress-meta">${goal.estimateText || "Vēl nav prognozes."}</div>
                             </div>
                             <strong>${clampProgress(goal.progressPercentage).toFixed(0)}%</strong>
                         </div>
@@ -209,25 +209,25 @@
                         </div>
                         <div class="goal-progress-amounts">
                             <div>
-                                <span>Target</span>
+                                <span>Mērķis</span>
                                 <strong>${formatCurrency(goal.targetAmount)}</strong>
                             </div>
                             <div>
-                                <span>Saved</span>
+                                <span>Uzkrāts</span>
                                 <strong>${formatCurrency(goal.totalSaved)}</strong>
                             </div>
                             <div>
-                                <span>Left</span>
+                                <span>Atlicis</span>
                                 <strong>${formatCurrency(goal.remainingAmount)}</strong>
                             </div>
                             <div>
-                                <span>Recurring</span>
+                                <span>Regulāri</span>
                                 <strong>${formatCurrency(goal.recurringContributionAmount)}/mo</strong>
                             </div>
                         </div>
                         <div class="progress-foot">
-                            <span>${goal.recommendation || "No recommendation yet."}</span>
-                            <span>${goal.targetDate || "No target date"}</span>
+                            <span>${goal.recommendation || "Vēl nav ieteikuma."}</span>
+                            <span>${goal.targetDate || "Nav mērķa datuma"}</span>
                         </div>
                     </div>
                 `
@@ -273,8 +273,8 @@
                 (goal) => `
                     <div class="upcoming-card">
                         <div class="upcoming-title">${goal.title}</div>
-                        <div class="upcoming-date">${goal.targetDate || "No target date"}</div>
-                        <div class="upcoming-meta">${formatCurrency(goal.remainingAmount)} left to save</div>
+                        <div class="upcoming-date">${goal.targetDate || "Nav mērķa datuma"}</div>
+                        <div class="upcoming-meta">${formatCurrency(goal.remainingAmount)} atlicis uzkrāt</div>
                     </div>
                 `
             )
@@ -290,7 +290,7 @@
                 (goal) => `
                     <div class="recommendation-card">
                         <div class="recommendation-card-title">${goal.title}</div>
-                        <div class="recommendation-card-text">${goal.recommendation || "No recommendation yet."}</div>
+                        <div class="recommendation-card-text">${goal.recommendation || "Vēl nav ieteikuma."}</div>
                     </div>
                 `
             )
@@ -309,7 +309,7 @@
                         <td>${formatCurrency(goal.remainingAmount)}</td>
                         <td class="table-progress-cell">
                             <div class="table-progress-label">
-                                <span>Completion</span>
+                                <span>Pabeigtība</span>
                                 <span>${clampProgress(goal.progressPercentage).toFixed(0)}%</span>
                             </div>
                             <div class="track-thin">
@@ -329,7 +329,7 @@
         const note = document.getElementById("formNote");
 
         if (pageMode !== "live") {
-            note.textContent = "This file is running in demo preview mode. Start Flask and open http://127.0.0.1:5000 to save real goals.";
+            note.textContent = "Šis fails darbojas demo priekšskatījuma režīmā. Palaidiet Flask un atveriet http://127.0.0.1:5000, lai saglabātu reālus mērķus.";
             return;
         }
 
@@ -342,7 +342,7 @@
         };
 
         button.disabled = true;
-        button.textContent = "Saving...";
+        button.textContent = "Saglabā...";
 
         try {
             const response = await fetch("/api/goals", {
@@ -355,17 +355,17 @@
             });
 
             if (!response.ok) {
-                throw new Error("Could not create goal");
+                throw new Error("Neizdevās izveidot mērķi");
             }
 
             form.reset();
-            note.textContent = "Goal saved. Dashboard refreshed.";
+            note.textContent = "Mērķis saglabāts. Panelis atjaunināts.";
             await loadAndRender();
         } catch (_error) {
-            note.textContent = "Could not create the goal from the dashboard form.";
+            note.textContent = "Neizdevās izveidot mērķi no paneļa formas.";
         } finally {
             button.disabled = false;
-            button.textContent = "Add Goal";
+            button.textContent = "Pievienot mērķi";
         }
     }
 

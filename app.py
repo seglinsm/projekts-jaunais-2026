@@ -73,7 +73,7 @@ def _register_web_routes(app):
     def create_goal_route():
         try:
             create_goal(get_db(), request.form)
-            flash("Savings goal created.", "success")
+            flash("Uzkrājuma mērķis izveidots.", "success")
         except ValidationError as error:
             flash(str(error), "error")
         return redirect(url_for("dashboard"))
@@ -82,7 +82,7 @@ def _register_web_routes(app):
     def update_goal_route(goal_id):
         try:
             update_goal(get_db(), goal_id, request.form)
-            flash("Goal updated.", "success")
+            flash("Mērķis atjaunināts.", "success")
         except (ValidationError, NotFoundError) as error:
             flash(str(error), "error")
         return redirect(url_for("goal_detail", goal_id=goal_id))
@@ -91,7 +91,7 @@ def _register_web_routes(app):
     def delete_goal_route(goal_id):
         try:
             delete_goal(get_db(), goal_id)
-            flash("Goal deleted.", "success")
+            flash("Mērķis dzēsts.", "success")
         except NotFoundError as error:
             flash(str(error), "error")
         return redirect(url_for("dashboard"))
@@ -100,7 +100,7 @@ def _register_web_routes(app):
     def add_contribution_route(goal_id):
         try:
             add_contribution(get_db(), goal_id, request.form)
-            flash("Contribution added.", "success")
+            flash("Iemaksa pievienota.", "success")
         except (ValidationError, NotFoundError) as error:
             flash(str(error), "error")
         return redirect(url_for("goal_detail", goal_id=goal_id))
@@ -111,7 +111,7 @@ def _register_web_routes(app):
         redirect_goal_id = goal_id or ""
         try:
             delete_contribution(get_db(), contribution_id)
-            flash("Contribution deleted.", "success")
+            flash("Iemaksa dzēsta.", "success")
         except NotFoundError as error:
             flash(str(error), "error")
 
@@ -123,7 +123,7 @@ def _register_web_routes(app):
     def recurring_plan_route(goal_id):
         try:
             upsert_recurring_plan(get_db(), goal_id, request.form)
-            flash("Recurring plan saved.", "success")
+            flash("Regulārais plāns saglabāts.", "success")
         except (ValidationError, NotFoundError) as error:
             flash(str(error), "error")
         return redirect(url_for("goal_detail", goal_id=goal_id))
@@ -235,7 +235,7 @@ def _register_api_routes(app):
 def _require_json_body():
     payload = request.get_json(silent=True)
     if payload is None:
-        raise ValidationError("Request body must be valid JSON.")
+        raise ValidationError("Pieprasījuma pamattekstam jābūt derīgam JSON.")
     return payload
 
 

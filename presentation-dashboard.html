@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | SaveSprint API</title>
+    <title>Panelis | SaveSprint API</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
                     <span class="light light-yellow"></span>
                     <span class="light light-green"></span>
                 </div>
-                <div class="window-caption">SaveSprint Savings Manager</div>
+                <div class="window-caption">SaveSprint Uzkrājumu pārvaldnieks</div>
                 <div class="window-actions" aria-hidden="true">
                     <span>-</span>
                     <span>[]</span>
@@ -27,28 +27,28 @@
             </div>
 
             <div class="menu-strip">
-                <span class="menu-item">File</span>
-                <span class="menu-item">Goals</span>
-                <span class="menu-item">Tools</span>
-                <span class="menu-item">View</span>
-                <span class="menu-item">Help</span>
+                <span class="menu-item">Fails</span>
+                <span class="menu-item">Mērķi</span>
+                <span class="menu-item">Rīki</span>
+                <span class="menu-item">Skats</span>
+                <span class="menu-item">Palīdzība</span>
             </div>
 
             <div class="toolbar-strip">
-                <a class="toolbar-button" href="#" title="Dashboard">
+                <a class="toolbar-button" href="#" title="Panelis">
                     <i data-lucide="layout-dashboard"></i>
                 </a>
-                <a class="toolbar-button" href="#create-goal" title="Create goal">
+                <a class="toolbar-button" href="#create-goal" title="Izveidot mērķi">
                     <i data-lucide="circle-plus"></i>
                 </a>
-                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Open API JSON">
+                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Atvērt API JSON">
                     <i data-lucide="database"></i>
                 </a>
-                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Health check">
+                <a class="toolbar-button" href="#" target="_blank" rel="noreferrer" title="Sistēmas pārbaude">
                     <i data-lucide="shield-check"></i>
                 </a>
                 <span class="toolbar-separator" aria-hidden="true"></span>
-                <span class="toolbar-label">Savings Dashboard</span>
+                <span class="toolbar-label">Uzkrājumu panelis</span>
             </div>
         </header>
 
@@ -60,33 +60,33 @@
             
 <section class="desk-layout">
     <aside class="nav-pane">
-        <div class="pane-head">Navigation</div>
+        <div class="pane-head">Navigācija</div>
         <div class="nav-scroll">
             <a class="tree-item active-item" href="#">
                 <i data-lucide="house"></i>
-                <span>Dashboard</span>
+                <span>Panelis</span>
             </a>
 
             <div class="tree-group">
                 <div class="tree-group-title">
                     <i data-lucide="piggy-bank"></i>
-                    <span>Savings Goals</span>
+                    <span>Uzkrājumu mērķi</span>
                 </div>
                 
                     
                         <a class="tree-subitem" href="#">
                             <i data-lucide="flag"></i>
-                            <span>Trip to Italy</span>
+                            <span>Ceļojums uz Itāliju</span>
                         </a>
                     
                         <a class="tree-subitem" href="#">
                             <i data-lucide="flag"></i>
-                            <span>New Laptop</span>
+                            <span>Jauns klēpjdators</span>
                         </a>
                     
                         <a class="tree-subitem" href="#">
                             <i data-lucide="flag"></i>
-                            <span>Emergency Fund</span>
+                            <span>Drošības fonds</span>
                         </a>
                     
                 
@@ -95,12 +95,12 @@
             <div class="tree-group">
                 <div class="tree-group-title">
                     <i data-lucide="wallet-cards"></i>
-                    <span>Dashboard Totals</span>
+                    <span>Paneļa kopsummas</span>
                 </div>
-                <div class="tree-note">Saved: EUR 850.00</div>
-                <div class="tree-note">Target: EUR 2,700.00</div>
-                <div class="tree-note">Goals: 3</div>
-                <div class="tree-note">Average progress: 32.0%</div>
+                <div class="tree-note">Uzkrāts: EUR 850.00</div>
+                <div class="tree-note">Mērķis: EUR 2,700.00</div>
+                <div class="tree-note">Mērķi: 3</div>
+                <div class="tree-note">Vidējais progress: 32.0%</div>
             </div>
         </div>
     </aside>
@@ -108,35 +108,35 @@
     <div class="desk-content">
         <section class="summary-strip">
             <div class="summary-chip">
-                <span>Total Goals</span>
+                <span>Mērķu skaits</span>
                 <strong>3</strong>
             </div>
             <div class="summary-chip">
-                <span>Total Target</span>
+                <span>Kopējais mērķis</span>
                 <strong>EUR 2,700.00</strong>
             </div>
             <div class="summary-chip">
-                <span>Total Saved</span>
+                <span>Kopā uzkrāts</span>
                 <strong>EUR 850.00</strong>
             </div>
             <div class="summary-chip">
-                <span>Average Progress</span>
+                <span>Vidējais progress</span>
                 <strong>32.0%</strong>
             </div>
         </section>
 
         <section class="desk-panels">
             <article class="desk-panel desk-panel-wide">
-                <div class="desk-panel-head">Savings Goals Overview</div>
+                <div class="desk-panel-head">Uzkrājumu mērķu pārskats</div>
                 
                     <div class="table-wrapper">
                         <table class="finance-table">
                             <thead>
                                 <tr>
-                                    <th>Goal</th>
-                                    <th>Target</th>
-                                    <th>Saved</th>
-                                    <th>Remaining</th>
+                                    <th>Mērķis</th>
+                                    <th>Mērķa summa</th>
+                                    <th>Uzkrāts</th>
+                                    <th>Atlicis</th>
                                     <th>Progress</th>
                                 </tr>
                             </thead>
@@ -145,7 +145,7 @@
                                     <tr>
                                         <td>
                                             <a class="table-link" href="#">
-                                                Trip to Italy
+                                                Ceļojums uz Itāliju
                                             </a>
                                         </td>
                                         <td>EUR 500.00</td>
@@ -157,7 +157,7 @@
                                     <tr>
                                         <td>
                                             <a class="table-link" href="#">
-                                                New Laptop
+                                                Jauns klēpjdators
                                             </a>
                                         </td>
                                         <td>EUR 1,200.00</td>
@@ -169,7 +169,7 @@
                                     <tr>
                                         <td>
                                             <a class="table-link" href="#">
-                                                Emergency Fund
+                                                Drošības fonds
                                             </a>
                                         </td>
                                         <td>EUR 1,000.00</td>
@@ -185,13 +185,13 @@
             </article>
 
             <article class="desk-panel">
-                <div class="desk-panel-head">Goal Progress</div>
+                <div class="desk-panel-head">Mērķu progress</div>
                 
                     <div class="bar-list">
                         
                             <div class="bar-row">
                                 <div class="bar-meta">
-                                    <span>Trip to Italy</span>
+                                    <span>Ceļojums uz Itāliju</span>
                                     <strong>36.0%</strong>
                                 </div>
                                 <div class="mini-track">
@@ -201,7 +201,7 @@
                         
                             <div class="bar-row">
                                 <div class="bar-meta">
-                                    <span>New Laptop</span>
+                                    <span>Jauns klēpjdators</span>
                                     <strong>35.0%</strong>
                                 </div>
                                 <div class="mini-track">
@@ -211,7 +211,7 @@
                         
                             <div class="bar-row">
                                 <div class="bar-meta">
-                                    <span>Emergency Fund</span>
+                                    <span>Drošības fonds</span>
                                     <strong>25.0%</strong>
                                 </div>
                                 <div class="mini-track">
@@ -224,53 +224,53 @@
             </article>
 
             <article class="desk-panel" id="create-goal">
-                <div class="desk-panel-head">Create New Goal</div>
+                <div class="desk-panel-head">Izveidot jaunu mērķi</div>
                 <form action="#" method="post" class="stack-form compact-form">
                     <label>
-                        Goal title
-                        <input type="text" name="title" placeholder="Trip to Italy" required>
+                        Mērķa nosaukums
+                        <input type="text" name="title" placeholder="Ceļojums uz Itāliju" required>
                     </label>
                     <label>
-                        Target amount
+                        Mērķa summa
                         <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
                     </label>
                     <label>
-                        Description
-                        <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
+                        Apraksts
+                        <textarea name="description" rows="3" placeholder="Lidojumi, viesnīca un ēdiens"></textarea>
                     </label>
                     <label>
-                        Target date
+                        Mērķa datums
                         <input type="date" name="targetDate">
                     </label>
-                    <button type="submit">Demo Mode</button>
+                    <button type="submit">Demo režīms</button>
                 </form>
             </article>
 
             <article class="desk-panel">
-                <div class="desk-panel-head">Target Dates</div>
+                <div class="desk-panel-head">Mērķu datumi</div>
                 
                     <div class="table-wrapper">
                         <table class="finance-table compact-table">
                             <thead>
                                 <tr>
-                                    <th>Goal</th>
-                                    <th>Target Date</th>
+                                    <th>Mērķis</th>
+                                    <th>Mērķa datums</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 
                                     <tr>
-                                        <td>Trip to Italy</td>
+                                        <td>Ceļojums uz Itāliju</td>
                                         <td>2026-08-15</td>
                                     </tr>
                                 
                                     <tr>
-                                        <td>New Laptop</td>
+                                        <td>Jauns klēpjdators</td>
                                         <td>2026-11-30</td>
                                     </tr>
                                 
                                     <tr>
-                                        <td>Emergency Fund</td>
+                                        <td>Drošības fonds</td>
                                         <td>2026-12-31</td>
                                     </tr>
                                 
@@ -281,35 +281,35 @@
             </article>
 
             <article class="desk-panel desk-panel-wide">
-                <div class="desk-panel-head">Goal Recommendations</div>
+                <div class="desk-panel-head">Mērķu ieteikumi</div>
                 
                     <div class="table-wrapper">
                         <table class="finance-table">
                             <thead>
                                 <tr>
-                                    <th>Goal</th>
-                                    <th>Estimate</th>
-                                    <th>Recommendation</th>
+                                    <th>Mērķis</th>
+                                    <th>Prognoze</th>
+                                    <th>Ieteikums</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 
                                     <tr>
-                                        <td>Trip to Italy</td>
-                                        <td>At your current pace, you may reach this goal in 5 months. Estimated completion: August 2026.</td>
-                                        <td>You are on a steady path toward your goal.</td>
+                                        <td>Ceļojums uz Itāliju</td>
+                                        <td>Ar pašreizējo tempu šo mērķi var sasniegt 5 mēnešos. Paredzamā pabeigšana: 2026. gada augusts.</td>
+                                        <td>Jūs stabili virzāties uz savu mērķi.</td>
                                     </tr>
                                 
                                     <tr>
-                                        <td>New Laptop</td>
-                                        <td>At your current pace, you may reach this goal in 8 months. Estimated completion: November 2026.</td>
-                                        <td>You are on a steady path toward your goal.</td>
+                                        <td>Jauns klēpjdators</td>
+                                        <td>Ar pašreizējo tempu šo mērķi var sasniegt 8 mēnešos. Paredzamā pabeigšana: 2026. gada novembris.</td>
+                                        <td>Jūs stabili virzāties uz savu mērķi.</td>
                                     </tr>
                                 
                                     <tr>
-                                        <td>Emergency Fund</td>
-                                        <td>At your current pace, you may reach this goal in 13 months. Estimated completion: April 2027.</td>
-                                        <td>Consider increasing your regular contribution to reach your goal faster.</td>
+                                        <td>Drošības fonds</td>
+                                        <td>Ar pašreizējo tempu šo mērķi var sasniegt 13 mēnešos. Paredzamā pabeigšana: 2027. gada aprīlis.</td>
+                                        <td>Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk.</td>
                                     </tr>
                                 
                             </tbody>
