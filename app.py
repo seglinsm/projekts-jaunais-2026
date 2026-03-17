@@ -21,6 +21,12 @@ from services import (
 )
 
 
+def _format_currency(value):
+    amount = float(value or 0)
+    whole, fraction = f"{amount:,.2f}".split(".")
+    return f"{whole.replace(',', ' ')},{fraction} €"
+
+
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config.update(
@@ -42,8 +48,7 @@ def create_app(test_config=None):
 def _register_template_helpers(app):
     @app.template_filter("currency")
     def currency_filter(value):
-        amount = float(value or 0)
-        return f"EUR {amount:,.2f}"
+        return _format_currency(value)
 
     @app.context_processor
     def inject_defaults():
@@ -73,7 +78,7 @@ def _register_web_routes(app):
     def create_goal_route():
         try:
             create_goal(get_db(), request.form)
-            flash("Uzkrājuma mērķis izveidots.", "success")
+            flash("Uzkrājumu mērķis izveidots.", "success")
         except ValidationError as error:
             flash(str(error), "error")
         return redirect(url_for("dashboard"))
@@ -235,7 +240,7 @@ def _register_api_routes(app):
 def _require_json_body():
     payload = request.get_json(silent=True)
     if payload is None:
-        raise ValidationError("Pieprasījuma pamattekstam jābūt derīgam JSON.")
+        raise ValidationError("Pieprasījuma saturam jābūt derīgam JSON.")
     return payload
 
 

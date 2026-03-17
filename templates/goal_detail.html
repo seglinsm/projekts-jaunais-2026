@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ goal.title }} | SaveSprint API{% endblock %}
+{% block title %}{{ goal.title }} | SaveSprint{% endblock %}
 {% block page_kicker %}Mērķa detaļas{% endblock %}
 {% block page_banner_title %}{{ goal.title }}{% endblock %}
 {% block page_banner_note %}
@@ -20,7 +20,7 @@
     <div class="section-heading">
         <div>
             <p class="eyebrow">Pašreizējais mērķa statuss</p>
-            <h2>{{ goal.progressPercentage }}% pabeigts</h2>
+            <h2>{{ goal.progressPercentage }}% sasniegts</h2>
         </div>
         <p class="section-copy compact-copy">
             {% if goal.description %}
@@ -46,11 +46,11 @@
         </div>
         <div class="summary-item">
             <span>Regulārais plāns</span>
-            <strong>{{ goal.recurringContributionAmount | currency }}/mo</strong>
+            <strong>{{ goal.recurringContributionAmount | currency }}/mēn.</strong>
         </div>
         <div class="summary-item">
             <span>Pašreizējais temps</span>
-            <strong>{{ goal.monthlySavingRate | currency }}/mo</strong>
+            <strong>{{ goal.monthlySavingRate | currency }}/mēn.</strong>
         </div>
     </div>
 
@@ -108,7 +108,7 @@
         <p class="eyebrow">Solis 2</p>
         <h2>Iestatīt regulāro plānu</h2>
         <p class="section-copy">
-            Nedēļā or monthly savings are used to estimate when the goal may be pabeigtsd.
+            Nedēļas vai mēneša uzkrājumi tiek izmantoti, lai prognozētu, kad mērķi varēs sasniegt.
         </p>
         <form action="{{ url_for('recurring_plan_route', goal_id=goal.id) }}" method="post" class="stack-form">
             <label>
@@ -205,7 +205,7 @@
                         <tr>
                             <td>{{ contribution.date }}</td>
                             <td>{{ contribution.amount | currency }}</td>
-                            <td><span class="type-badge">{{ contribution.type }}</span></td>
+                            <td><span class="type-badge">{{ contribution.typeLabel }}</span></td>
                             <td>{{ contribution.note if contribution.note else "Nav piezīmes" }}</td>
                             <td class="table-action">
                                 {% if contribution.type == "manual" %}

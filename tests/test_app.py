@@ -67,7 +67,7 @@ class SavingsApiTests(unittest.TestCase):
     def test_goal_can_be_updated_and_deleted(self):
         create_response = self.client.post(
             "/api/goals",
-            json={"title": "Laptop", "targetAmount": 1200},
+            json={"title": "Klēpjdators", "targetAmount": 1200},
         )
         goal_id = create_response.get_json()["id"]
 

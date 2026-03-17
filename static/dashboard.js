@@ -11,7 +11,7 @@
             monthlySavingRate: 70,
             recurringContributionAmount: 50,
             targetDate: "2026-08-15",
-            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 5 mēnešos.",
+            estimateText: "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 5 mēnešu laikā.",
             recommendation: "Jūs stabili virzāties uz savu mērķi.",
         },
         {
@@ -25,7 +25,7 @@
             monthlySavingRate: 110,
             recurringContributionAmount: 100,
             targetDate: "2026-11-30",
-            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 8 mēnešos.",
+            estimateText: "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 8 mēnešu laikā.",
             recommendation: "Jūs stabili virzāties uz savu mērķi.",
         },
         {
@@ -39,7 +39,7 @@
             monthlySavingRate: 60,
             recurringContributionAmount: 40,
             targetDate: "2026-12-31",
-            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 13 mēnešos.",
+            estimateText: "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 13 mēnešu laikā.",
             recommendation: "Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk.",
         },
         {
@@ -53,7 +53,7 @@
             monthlySavingRate: 180,
             recurringContributionAmount: 150,
             targetDate: "2026-09-10",
-            estimateText: "Ar pašreizējo tempu šo mērķi var sasniegt 9 mēnešos.",
+            estimateText: "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 9 mēnešu laikā.",
             recommendation: "Jūs esat priekšā plānam.",
         },
     ];
@@ -109,7 +109,7 @@
             });
 
             if (!response.ok) {
-                throw new Error("Request failed");
+                throw new Error("Pieprasījums neizdevās");
             }
 
             const payload = await response.json();
@@ -131,9 +131,9 @@
         const todayLabel = document.getElementById("todayLabel");
 
         metricStrip.innerHTML = [
-            ["Kopējais mērķis", formatCurrency(overview.totalTarget)],
-            ["Uzkrāts līdz šim", formatCurrency(overview.totalSaved)],
-            ["Atlicis", formatCurrency(overview.totalRemaining)],
+            ["Kopējā mērķa summa", formatCurrency(overview.totalTarget)],
+            ["Kopā uzkrāts", formatCurrency(overview.totalSaved)],
+            ["Kopā atlicis", formatCurrency(overview.totalRemaining)],
             ["Vidējais progress", `${overview.averageProgress.toFixed(1)}%`],
         ]
             .map(
@@ -183,7 +183,7 @@
                         <div class="mini-progress">
                             <div class="mini-progress-fill" style="width:${clampProgress(goal.visualProgressPercentage)}%"></div>
                         </div>
-                        <div class="sidebar-goal-meta">${formatCurrency(goal.totalSaved)} of ${formatCurrency(goal.targetAmount)}</div>
+                        <div class="sidebar-goal-meta">${formatCurrency(goal.totalSaved)} no ${formatCurrency(goal.targetAmount)}</div>
                     </div>
                 `
             )
@@ -222,7 +222,7 @@
                             </div>
                             <div>
                                 <span>Regulāri</span>
-                                <strong>${formatCurrency(goal.recurringContributionAmount)}/mo</strong>
+                                <strong>${formatCurrency(goal.recurringContributionAmount)}/mēn.</strong>
                             </div>
                         </div>
                         <div class="progress-foot">
@@ -247,12 +247,12 @@
                     <div class="compact-progress-card">
                         <div class="compact-progress-top">
                             <span>${goal.title}</span>
-                            <strong>${formatCurrency(goal.monthlySavingRate)}/mo</strong>
+                            <strong>${formatCurrency(goal.monthlySavingRate)}/mēn.</strong>
                         </div>
                         <div class="track-thin">
                             <div class="track-fill-thin" style="width:${clampProgress(width)}%"></div>
                         </div>
-                        <div class="compact-progress-note">Recurring plan: ${formatCurrency(goal.recurringContributionAmount)}/mo</div>
+                        <div class="compact-progress-note">Regulārais plāns: ${formatCurrency(goal.recurringContributionAmount)}/mēn.</div>
                     </div>
                 `;
             })

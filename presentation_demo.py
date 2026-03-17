@@ -15,7 +15,7 @@ def get_demo_dashboard_context():
             "visualProgressPercentage": 36.0,
             "monthlySavingRate": 70.0,
             "recurringContributionAmount": 50.0,
-            "estimateText": "Ar pašreizējo tempu šo mērķi var sasniegt 5 mēnešos. Paredzamā pabeigšana: 2026. gada augusts.",
+            "estimateText": "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 5 mēnešu laikā. Paredzamā pabeigšana: 2026. gada augustā.",
             "recommendation": "Jūs stabili virzāties uz savu mērķi.",
         },
         {
@@ -30,7 +30,7 @@ def get_demo_dashboard_context():
             "visualProgressPercentage": 35.0,
             "monthlySavingRate": 110.0,
             "recurringContributionAmount": 100.0,
-            "estimateText": "Ar pašreizējo tempu šo mērķi var sasniegt 8 mēnešos. Paredzamā pabeigšana: 2026. gada novembris.",
+            "estimateText": "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 8 mēnešu laikā. Paredzamā pabeigšana: 2026. gada novembrī.",
             "recommendation": "Jūs stabili virzāties uz savu mērķi.",
         },
         {
@@ -45,7 +45,7 @@ def get_demo_dashboard_context():
             "visualProgressPercentage": 25.0,
             "monthlySavingRate": 60.0,
             "recurringContributionAmount": 40.0,
-            "estimateText": "Ar pašreizējo tempu šo mērķi var sasniegt 13 mēnešos. Paredzamā pabeigšana: 2027. gada aprīlis.",
+            "estimateText": "Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram 13 mēnešu laikā. Paredzamā pabeigšana: 2027. gada aprīlī.",
             "recommendation": "Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk.",
         },
     ]
