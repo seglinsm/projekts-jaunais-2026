@@ -1,178 +1,205 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | GoalBloom</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body class="dashboard-page">
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
 
-{% block title %}Dashboard | GoalBloom{% endblock %}
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="/dashboard">
+                <span class="brand-mark">GB</span>
+                <span>
+                    <strong>GoalBloom</strong>
+                    <small>Simple savings tracker</small>
+                </span>
+            </a>
 
-{% block content %}
-    <section class="hero-panel">
-        <div>
-            <p class="eyebrow">Dashboard</p>
-            <h1>{{ dashboard.goalName or "Build your first savings goal" }}</h1>
-            <p class="hero-copy">
-                {% if dashboard.hasSavedPlan %}
+            <nav class="top-nav">
+                <span id="sessionBadge" class="nav-chip">Loading...</span>
+                <a class="nav-link" href="/dashboard">Dashboard</a>
+                <form action="/logout" method="post">
+                    <button type="submit" class="nav-button">Log out</button>
+                </form>
+            </nav>
+        </header>
+
+        <section id="noticeBanner" class="flash-stack" hidden></section>
+
+        <section class="hero-panel">
+            <div>
+                <p class="eyebrow">Dashboard</p>
+                <h1 id="heroTitle">Savings dashboard</h1>
+                <p id="heroCopy" class="hero-copy">
                     Track one clear target, update it quickly, and keep the important numbers visible.
-                {% else %}
-                    This version keeps things intentionally small: one account, one plan, one clear progress view.
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="hero-meter">
-            <span>Progress</span>
-            <strong>{{ dashboard.progressPercentage }}%</strong>
-            <small class="status-pill status-{{ dashboard.statusTone }}">{{ dashboard.statusLabel }}</small>
-        </div>
-    </section>
-
-    <section class="dashboard-grid">
-        <article class="panel-card form-card">
-            <div class="panel-head">
-                <div>
-                    <p class="eyebrow">Plan</p>
-                    <h2>Goal details</h2>
-                </div>
-                <span class="soft-label">Tiny feature: quick add buttons</span>
+                </p>
             </div>
 
-            <form class="dashboard-form" action="{{ url_for('dashboard') }}" method="post">
-                <label>
-                    Goal name
-                    <input type="text" name="goal_name" maxlength="60" value="{{ dashboard.goalName }}" placeholder="Emergency fund" required>
-                </label>
-                <label>
-                    Goal amount
-                    <input type="number" name="goal_amount" min="0.01" step="0.01" value="{{ dashboard.goalAmount if dashboard.goalAmount else '' }}" placeholder="5000" required>
-                </label>
-                <label>
-                    Current balance
-                    <input type="number" name="current_balance" min="0" step="0.01" value="{{ dashboard.currentBalance if dashboard.hasSavedPlan else '' }}" placeholder="1200" required>
-                </label>
-                <label>
-                    Monthly contribution
-                    <input type="number" name="monthly_contribution" min="0" step="0.01" value="{{ dashboard.monthlyContribution if dashboard.hasSavedPlan else '' }}" placeholder="150" required>
-                </label>
-                <label>
-                    Target date
-                    <input type="date" name="target_date" value="{{ dashboard.targetDate }}">
-                </label>
-                <label>
-                    Note
-                    <textarea name="note" rows="4" maxlength="240" placeholder="Why are you saving for this?">{{ dashboard.note }}</textarea>
-                </label>
-                <button type="submit" class="primary-button">Save plan</button>
-            </form>
+            <div class="hero-meter hero-meter-graphic">
+                <div class="ring-shell">
+                    <svg class="progress-ring" viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="progress-ring-track" cx="60" cy="60" r="54"></circle>
+                        <circle id="progressRingFill" class="progress-ring-fill" cx="60" cy="60" r="54"></circle>
+                    </svg>
+                    <div class="ring-label">
+                        <strong id="progressRingLabel">0%</strong>
+                        <span id="progressStatus">Ready to start</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            <div class="quick-add-block">
-                <div>
-                    <h3>Quick add</h3>
-                    <p>Bump the current balance without editing the full form.</p>
+        <section class="dashboard-grid">
+            <article class="panel-card form-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Plan</p>
+                        <h2>Goal details</h2>
+                    </div>
+                    <span id="modeBadge" class="soft-label">Loading data</span>
                 </div>
 
-                <div class="quick-add-list">
-                    {% for amount in dashboard.quickAmounts %}
-                        <form action="{{ url_for('quick_add') }}" method="post">
-                            <input type="hidden" name="amount" value="{{ amount }}">
-                            <button type="submit" class="secondary-button" {% if not dashboard.hasSavedPlan %}disabled{% endif %}>+{{ amount }}</button>
+                <form class="dashboard-form" action="/dashboard" method="post">
+                    <label>
+                        Goal name
+                        <input id="goalNameInput" type="text" name="goal_name" maxlength="60" placeholder="Emergency fund" required>
+                    </label>
+                    <label>
+                        Goal amount
+                        <input id="goalAmountInput" type="number" name="goal_amount" min="0.01" step="0.01" placeholder="5000" required>
+                    </label>
+                    <label>
+                        Current balance
+                        <input id="currentBalanceInput" type="number" name="current_balance" min="0" step="0.01" placeholder="1200" required>
+                    </label>
+                    <label>
+                        Monthly contribution
+                        <input id="monthlyContributionInput" type="number" name="monthly_contribution" min="0" step="0.01" placeholder="150" required>
+                    </label>
+                    <label>
+                        Target date
+                        <input id="targetDateInput" type="date" name="target_date">
+                    </label>
+                    <label>
+                        Note
+                        <textarea id="noteInput" name="note" rows="4" maxlength="240" placeholder="Why are you saving for this?"></textarea>
+                    </label>
+                    <button type="submit" class="primary-button">Save plan</button>
+                </form>
+
+                <div class="quick-add-block">
+                    <div>
+                        <h3>Quick add</h3>
+                        <p>Bump the current balance without editing the full form.</p>
+                    </div>
+
+                    <div class="quick-add-list">
+                        <form action="/dashboard/quick-add" method="post">
+                            <input type="hidden" name="amount" value="10">
+                            <button class="secondary-button quick-add-button" type="submit">+10</button>
                         </form>
-                    {% endfor %}
+                        <form action="/dashboard/quick-add" method="post">
+                            <input type="hidden" name="amount" value="25">
+                            <button class="secondary-button quick-add-button" type="submit">+25</button>
+                        </form>
+                        <form action="/dashboard/quick-add" method="post">
+                            <input type="hidden" name="amount" value="50">
+                            <button class="secondary-button quick-add-button" type="submit">+50</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </article>
+            </article>
 
-        <article class="panel-card summary-card">
-            <div class="panel-head">
-                <div>
-                    <p class="eyebrow">Snapshot</p>
-                    <h2>Progress view</h2>
+            <article class="panel-card summary-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Snapshot</p>
+                        <h2>Progress view</h2>
+                    </div>
+                    <span id="remainingBadge" class="soft-label">EUR 0.00 left</span>
                 </div>
-                <span class="soft-label">{{ dashboard.remainingAmount|currency }} left</span>
-            </div>
 
-            <div class="money-row">
-                <div>
-                    <span class="metric-label">Current balance</span>
-                    <strong class="money-number">{{ dashboard.currentBalance|currency }}</strong>
+                <div class="money-row">
+                    <div>
+                        <span class="metric-label">Current balance</span>
+                        <strong id="currentBalanceValue" class="money-number">EUR 0.00</strong>
+                    </div>
+                    <div>
+                        <span class="metric-label">Goal</span>
+                        <strong id="goalAmountValue" class="money-number small">EUR 0.00</strong>
+                    </div>
                 </div>
-                <div>
-                    <span class="metric-label">Goal</span>
-                    <strong class="money-number small">{{ dashboard.goalAmount|currency }}</strong>
+
+                <div class="progress-track" aria-label="Goal progress">
+                    <div id="progressBarFill" class="progress-fill" style="width: 0%;"></div>
                 </div>
-            </div>
 
-            <div class="progress-track" aria-label="Goal progress">
-                <div class="progress-fill" style="width: {{ dashboard.visualProgressPercentage }}%;"></div>
-            </div>
-
-            <div class="metric-grid">
-                <div class="metric-box">
-                    <span class="metric-label">Remaining</span>
-                    <strong>{{ dashboard.remainingAmount|currency }}</strong>
+                <div class="metric-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">Remaining</span>
+                        <strong id="remainingValue">EUR 0.00</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Monthly plan</span>
+                        <strong id="monthlyPlanValue">EUR 0.00</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Target date</span>
+                        <strong id="targetDateValue">No target date</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Required pace</span>
+                        <strong id="requiredPaceValue">Flexible</strong>
+                    </div>
                 </div>
-                <div class="metric-box">
-                    <span class="metric-label">Monthly plan</span>
-                    <strong>{{ dashboard.monthlyContribution|currency }}</strong>
+
+                <p id="forecastText" class="insight">Loading your savings forecast...</p>
+                <p id="timelineText" class="subtle-copy">Checking the current plan.</p>
+            </article>
+
+            <article class="panel-card milestones-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Milestones</p>
+                        <h2>Mini wins</h2>
+                    </div>
                 </div>
-                <div class="metric-box">
-                    <span class="metric-label">Target date</span>
-                    <strong>{{ dashboard.targetDate|date_label }}</strong>
+
+                <div class="milestone-row">
+                    <span class="milestone-pill" data-milestone="25">25%</span>
+                    <span class="milestone-pill" data-milestone="50">50%</span>
+                    <span class="milestone-pill" data-milestone="75">75%</span>
+                    <span class="milestone-pill" data-milestone="100">100%</span>
                 </div>
-                <div class="metric-box">
-                    <span class="metric-label">Required pace</span>
-                    <strong>
-                        {% if dashboard.requiredMonthlyAmount is not none %}
-                            {{ dashboard.requiredMonthlyAmount|currency }}
-                        {% else %}
-                            Flexible
-                        {% endif %}
-                    </strong>
+
+                <p id="nextMilestoneText" class="subtle-copy">Your next milestone will appear here.</p>
+            </article>
+
+            <article class="panel-card notes-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Focus</p>
+                        <h2>What matters now</h2>
+                    </div>
                 </div>
-            </div>
 
-            <p class="insight">{{ dashboard.forecastText }}</p>
-            <p class="subtle-copy">{{ dashboard.timelineText }}</p>
-        </article>
-
-        <article class="panel-card milestones-card">
-            <div class="panel-head">
-                <div>
-                    <p class="eyebrow">Milestones</p>
-                    <h2>Mini wins</h2>
-                </div>
-            </div>
-
-            <div class="milestone-row">
-                {% for milestone in dashboard.milestones %}
-                    <span class="milestone-pill {% if milestone.reached %}milestone-hit{% endif %}">
-                        {{ milestone.label }}
-                    </span>
-                {% endfor %}
-            </div>
-
-            <p class="subtle-copy">{{ dashboard.nextMilestoneText }}</p>
-        </article>
-
-        <article class="panel-card notes-card">
-            <div class="panel-head">
-                <div>
-                    <p class="eyebrow">Focus</p>
-                    <h2>What matters now</h2>
-                </div>
-            </div>
-
-            {% if dashboard.daysUntilTarget is not none %}
-                <p class="focus-line">
-                    {{ dashboard.daysUntilTarget }} days remain until your target date.
+                <p id="focusLine" class="focus-line">
+                    Loading target date information...
                 </p>
-            {% else %}
-                <p class="focus-line">
-                    No deadline set yet. That keeps the plan flexible, but it also removes the pace check.
-                </p>
-            {% endif %}
 
-            {% if dashboard.note %}
-                <div class="note-card">{{ dashboard.note }}</div>
-            {% else %}
-                <div class="note-card note-card-empty">Add a short note if you want a reminder of why this goal matters.</div>
-            {% endif %}
-        </article>
-    </section>
-{% endblock %}
+                <div id="noteCard" class="note-card note-card-empty">
+                    Add a short note if you want a reminder of why this goal matters.
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <script src="../static/site.js"></script>
+    <script src="../static/dashboard.js"></script>
+</body>
+</html>

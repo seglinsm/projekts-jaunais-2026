@@ -1,55 +1,84 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | GoalBloom</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body class="auth-page">
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
 
-{% block title %}Login | GoalBloom{% endblock %}
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="/login">
+                <span class="brand-mark">GB</span>
+                <span>
+                    <strong>GoalBloom</strong>
+                    <small>Simple savings tracker</small>
+                </span>
+            </a>
 
-{% block content %}
-    <section class="auth-layout">
-        <article class="auth-copy">
-            <div>
-                <p class="eyebrow">Login</p>
-                <h1>Track one goal clearly.</h1>
-                <p>
-                    This project takes the same login, register, and dashboard flow from the reference repo,
-                    then trims it down into a cleaner single-goal savings tracker.
-                </p>
-            </div>
+            <nav class="top-nav">
+                <a class="nav-link" href="/login">Login</a>
+                <a class="nav-button" href="/register">Register</a>
+            </nav>
+        </header>
 
-            <div class="feature-list">
-                <div class="feature-card">
-                    <strong>Simple auth flow</strong>
-                    <span>Create an account and go straight into the dashboard.</span>
+        <section id="noticeBanner" class="flash-stack" hidden></section>
+
+        <section class="auth-layout">
+            <article class="auth-copy">
+                <div>
+                    <p class="eyebrow">Login</p>
+                    <h1>Track one goal clearly.</h1>
+                    <p>
+                        This version keeps the same project logic, but the template is now a standalone page,
+                        closer to the attached repo and easier to preview.
+                    </p>
                 </div>
-                <div class="feature-card">
-                    <strong>Progress at a glance</strong>
-                    <span>One main progress bar with the numbers that matter.</span>
+
+                <div class="feature-list">
+                    <div class="feature-card">
+                        <strong>One clear dashboard</strong>
+                        <span>Goal amount, current balance, progress bar, and milestones.</span>
+                    </div>
+                    <div class="feature-card">
+                        <strong>Quick add buttons</strong>
+                        <span>Update balance fast during the demo.</span>
+                    </div>
+                    <div class="feature-card">
+                        <strong>Teacher-friendly flow</strong>
+                        <span>Register, log in, edit the goal, then show the updates live.</span>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <strong>Quick add</strong>
-                    <span>Small balance updates without rewriting the whole plan.</span>
-                </div>
-            </div>
-        </article>
+            </article>
 
-        <article class="auth-panel">
-            <p class="eyebrow">Welcome back</p>
-            <h2>Log in</h2>
+            <article class="auth-panel">
+                <p class="eyebrow">Welcome back</p>
+                <h2>Log in</h2>
 
-            <form class="auth-form" action="{{ url_for('login') }}" method="post">
-                <label>
-                    Username
-                    <input type="text" name="username" value="{{ suggested_username }}" placeholder="your_name" required>
-                </label>
-                <label>
-                    Password
-                    <input type="password" name="password" placeholder="At least 6 characters" required>
-                </label>
-                <button type="submit" class="primary-button">Open dashboard</button>
-            </form>
+                <form class="auth-form" action="/login" method="post">
+                    <label>
+                        Username
+                        <input id="usernameInput" type="text" name="username" placeholder="your_name" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" placeholder="At least 6 characters" required>
+                    </label>
+                    <button type="submit" class="primary-button">Open dashboard</button>
+                </form>
 
-            <footer>
-                New here?
-                <a class="inline-link" href="{{ url_for('register') }}">Create an account</a>
-            </footer>
-        </article>
-    </section>
-{% endblock %}
+                <footer>
+                    New here?
+                    <a class="inline-link" href="/register">Create an account</a>
+                </footer>
+            </article>
+        </section>
+    </div>
+
+    <script src="../static/site.js"></script>
+</body>
+</html>

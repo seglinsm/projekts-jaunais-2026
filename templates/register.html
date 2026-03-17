@@ -1,59 +1,88 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | GoalBloom</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body class="auth-page">
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
 
-{% block title %}Register | GoalBloom{% endblock %}
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="/login">
+                <span class="brand-mark">GB</span>
+                <span>
+                    <strong>GoalBloom</strong>
+                    <small>Simple savings tracker</small>
+                </span>
+            </a>
 
-{% block content %}
-    <section class="auth-layout">
-        <article class="auth-copy">
-            <div>
-                <p class="eyebrow">Register</p>
-                <h1>Start your savings plan.</h1>
-                <p>
-                    Make a simple account, set one target, and use the dashboard to see how close you are.
-                    The scope stays intentionally basic.
-                </p>
-            </div>
+            <nav class="top-nav">
+                <a class="nav-link" href="/login">Login</a>
+                <a class="nav-button" href="/register">Register</a>
+            </nav>
+        </header>
 
-            <div class="feature-list">
-                <div class="feature-card">
-                    <strong>Goal amount</strong>
-                    <span>Store a target amount and your current balance.</span>
+        <section id="noticeBanner" class="flash-stack" hidden></section>
+
+        <section class="auth-layout">
+            <article class="auth-copy">
+                <div>
+                    <p class="eyebrow">Register</p>
+                    <h1>Start your savings plan.</h1>
+                    <p>
+                        The backend still handles authentication and storage, but the page itself is now easier to
+                        preview and present.
+                    </p>
                 </div>
-                <div class="feature-card">
-                    <strong>Monthly pace</strong>
-                    <span>See whether your contribution is enough for the selected date.</span>
+
+                <div class="feature-list">
+                    <div class="feature-card">
+                        <strong>Goal amount</strong>
+                        <span>Store the target and current progress.</span>
+                    </div>
+                    <div class="feature-card">
+                        <strong>Monthly pace</strong>
+                        <span>Show whether the target date is realistic.</span>
+                    </div>
+                    <div class="feature-card">
+                        <strong>Presentation mode</strong>
+                        <span>Dashboard can fall back to demo data if opened outside Flask.</span>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <strong>Tiny extras</strong>
-                    <span>Milestones and quick-add buttons keep it from feeling empty.</span>
-                </div>
-            </div>
-        </article>
+            </article>
 
-        <article class="auth-panel">
-            <p class="eyebrow">Create account</p>
-            <h2>Register</h2>
+            <article class="auth-panel">
+                <p class="eyebrow">Create account</p>
+                <h2>Register</h2>
 
-            <form class="auth-form" action="{{ url_for('register') }}" method="post">
-                <label>
-                    Username
-                    <input type="text" name="username" maxlength="24" placeholder="your_name" required>
-                </label>
-                <label>
-                    Password
-                    <input type="password" name="password" placeholder="At least 6 characters" required>
-                </label>
-                <label>
-                    Confirm password
-                    <input type="password" name="confirm_password" placeholder="Repeat your password" required>
-                </label>
-                <button type="submit" class="primary-button">Create account</button>
-            </form>
+                <form class="auth-form" action="/register" method="post">
+                    <label>
+                        Username
+                        <input type="text" name="username" maxlength="24" placeholder="your_name" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" placeholder="At least 6 characters" required>
+                    </label>
+                    <label>
+                        Confirm password
+                        <input type="password" name="confirm_password" placeholder="Repeat your password" required>
+                    </label>
+                    <button type="submit" class="primary-button">Create account</button>
+                </form>
 
-            <footer>
-                Already registered?
-                <a class="inline-link" href="{{ url_for('login') }}">Go to login</a>
-            </footer>
-        </article>
-    </section>
-{% endblock %}
+                <footer>
+                    Already registered?
+                    <a class="inline-link" href="/login">Go to login</a>
+                </footer>
+            </article>
+        </section>
+    </div>
+
+    <script src="../static/site.js"></script>
+</body>
+</html>

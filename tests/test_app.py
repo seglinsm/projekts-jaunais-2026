@@ -36,10 +36,10 @@ class GoalBloomTests(unittest.TestCase):
                 "password": "secret123",
                 "confirm_password": "secret123",
             },
-            follow_redirects=True,
         )
-        self.assertEqual(register_response.status_code, 200)
-        self.assertIn("Account created", register_response.get_data(as_text=True))
+        self.assertEqual(register_response.status_code, 302)
+        self.assertIn("/login?", register_response.headers["Location"])
+        self.assertIn("Account+created.", register_response.headers["Location"])
 
         login_response = self.client.post(
             "/login",
@@ -47,16 +47,21 @@ class GoalBloomTests(unittest.TestCase):
                 "username": "demo_user",
                 "password": "secret123",
             },
-            follow_redirects=True,
         )
-        login_html = login_response.get_data(as_text=True)
-        self.assertEqual(login_response.status_code, 200)
-        self.assertIn("Signed in as demo_user", login_html)
-        self.assertIn("Build your first savings goal", login_html)
+        self.assertEqual(login_response.status_code, 302)
+        self.assertIn("/dashboard?", login_response.headers["Location"])
+        self.assertIn("Welcome+back.", login_response.headers["Location"])
 
-        logout_response = self.client.post("/logout", follow_redirects=True)
-        self.assertEqual(logout_response.status_code, 200)
-        self.assertIn("You have been logged out", logout_response.get_data(as_text=True))
+        dashboard_response = self.client.get("/dashboard")
+        dashboard_html = dashboard_response.get_data(as_text=True)
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertIn("Savings dashboard", dashboard_html)
+        self.assertIn("../static/dashboard.js", dashboard_html)
+
+        logout_response = self.client.post("/logout")
+        self.assertEqual(logout_response.status_code, 302)
+        self.assertIn("/login?", logout_response.headers["Location"])
+        self.assertIn("logged+out", logout_response.headers["Location"])
 
     def test_user_can_save_plan_and_use_quick_add(self):
         self._register_and_login()
@@ -71,23 +76,25 @@ class GoalBloomTests(unittest.TestCase):
                 "target_date": "",
                 "note": "Three months of living costs.",
             },
-            follow_redirects=True,
         )
-        save_html = save_response.get_data(as_text=True)
-        self.assertEqual(save_response.status_code, 200)
-        self.assertIn("Emergency Fund", save_html)
-        self.assertIn("40.0%", save_html)
-        self.assertIn("Three months of living costs.", save_html)
+        self.assertEqual(save_response.status_code, 302)
+        self.assertIn("/dashboard?", save_response.headers["Location"])
 
-        quick_add_response = self.client.post(
-            "/dashboard/quick-add",
-            data={"amount": "25"},
-            follow_redirects=True,
-        )
-        quick_add_html = quick_add_response.get_data(as_text=True)
-        self.assertEqual(quick_add_response.status_code, 200)
-        self.assertIn("42.5%", quick_add_html)
-        self.assertIn("Current balance updated", quick_add_html)
+        data_response = self.client.get("/api/dashboard-data")
+        payload = data_response.get_json()
+        self.assertEqual(data_response.status_code, 200)
+        self.assertEqual(payload["goalName"], "Emergency Fund")
+        self.assertEqual(payload["progressPercentage"], 40.0)
+        self.assertEqual(payload["note"], "Three months of living costs.")
+
+        quick_add_response = self.client.post("/dashboard/quick-add", data={"amount": "25"})
+        self.assertEqual(quick_add_response.status_code, 302)
+        self.assertIn("/dashboard?", quick_add_response.headers["Location"])
+
+        updated_data_response = self.client.get("/api/dashboard-data")
+        updated_payload = updated_data_response.get_json()
+        self.assertEqual(updated_payload["currentBalance"], 425.0)
+        self.assertEqual(updated_payload["progressPercentage"], 42.5)
 
         connection = sqlite3.connect(self.database_path)
         row = connection.execute(
@@ -111,7 +118,8 @@ class GoalBloomTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("{{", html)
         self.assertNotIn("{%", html)
-        self.assertIn("/static/style.css", html)
+        self.assertIn("../static/style.css", html)
+        self.assertIn("../static/dashboard.js", html)
 
     def _register_and_login(self):
         self.client.post(

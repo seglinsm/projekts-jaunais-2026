@@ -148,6 +148,10 @@ button {
     gap: 12px;
 }
 
+.top-nav form {
+    margin: 0;
+}
+
 .nav-chip,
 .nav-link,
 .nav-button,
@@ -291,6 +295,61 @@ h2 {
     border-radius: 24px;
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid rgba(25, 101, 79, 0.14);
+}
+
+.hero-meter-graphic {
+    display: grid;
+    place-items: center;
+}
+
+.ring-shell {
+    position: relative;
+    width: 170px;
+    height: 170px;
+}
+
+.progress-ring {
+    width: 170px;
+    height: 170px;
+    transform: rotate(-90deg);
+}
+
+.progress-ring-track,
+.progress-ring-fill {
+    fill: none;
+    stroke-width: 10;
+}
+
+.progress-ring-track {
+    stroke: rgba(25, 101, 79, 0.12);
+}
+
+.progress-ring-fill {
+    stroke: url(#goalRingGradient);
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-dasharray: 339.292;
+    stroke-dashoffset: 339.292;
+    transition: stroke-dashoffset 240ms ease;
+}
+
+.ring-label {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.ring-label strong {
+    display: block;
+    font-size: 2rem;
+}
+
+.ring-label span {
+    color: var(--muted);
+    font-size: 0.9rem;
 }
 
 .hero-meter span,
