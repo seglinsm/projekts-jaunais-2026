@@ -352,6 +352,20 @@ h2 {
     font-weight: 800;
 }
 
+.goal-title-link,
+.sidebar-goal-link,
+.table-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.goal-title-link:hover,
+.sidebar-goal-link:hover,
+.table-link:hover {
+    color: var(--blue);
+    text-decoration: underline;
+}
+
 .goal-progress-meta,
 .compact-progress-note,
 .recommendation-card-text,
@@ -451,6 +465,19 @@ h2 {
 
 .table-progress-cell {
     min-width: 160px;
+}
+
+.empty-card {
+    padding: 1rem;
+    border-radius: 18px;
+    background: var(--card-soft);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.empty-table-row {
+    color: var(--muted);
 }
 
 .table-progress-label {

@@ -88,6 +88,69 @@ class SavingsApiTests(unittest.TestCase):
         missing_response = self.client.get(f"/api/goals/{goal_id}")
         self.assertEqual(missing_response.status_code, 404)
 
+    def test_web_goal_flow_supports_editing_and_deleting(self):
+        create_response = self.client.post(
+            "/goals",
+            data={
+                "title": "Velosipēds",
+                "targetAmount": "300",
+                "description": "Pilsētas braucieniem",
+                "targetDate": "2026-09-01",
+            },
+        )
+        self.assertEqual(create_response.status_code, 302)
+
+        goals_response = self.client.get("/api/goals")
+        self.assertEqual(goals_response.status_code, 200)
+        goal_id = goals_response.get_json()["items"][0]["id"]
+
+        dashboard_response = self.client.get("/")
+        dashboard_html = dashboard_response.get_data(as_text=True)
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertIn("SaveSprint Uzkrājumu panelis", dashboard_html)
+        self.assertIn('action="/goals"', dashboard_html)
+
+        add_contribution_response = self.client.post(
+            f"/goals/{goal_id}/contributions",
+            data={
+                "amount": "45",
+                "date": "2026-03-10",
+                "note": "Kabatas nauda",
+                "type": "manual",
+            },
+        )
+        self.assertEqual(add_contribution_response.status_code, 302)
+
+        contributions_response = self.client.get(f"/api/goals/{goal_id}/contributions")
+        self.assertEqual(contributions_response.status_code, 200)
+        contribution_id = contributions_response.get_json()["items"][0]["id"]
+
+        update_contribution_response = self.client.post(
+            f"/contributions/{contribution_id}/edit",
+            data={
+                "goal_id": str(goal_id),
+                "amount": "55",
+                "date": "2026-03-11",
+                "note": "Atjaunināta piezīme",
+                "type": "manual",
+            },
+        )
+        self.assertEqual(update_contribution_response.status_code, 302)
+
+        detail_response = self.client.get(f"/goals/{goal_id}")
+        detail_html = detail_response.get_data(as_text=True)
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertIn("Dzēst mērķi", detail_html)
+        self.assertIn("Rediģēt", detail_html)
+        self.assertIn("Atjaunināta piezīme", detail_html)
+        self.assertIn("Manuāla", detail_html)
+
+        delete_goal_response = self.client.post(f"/goals/{goal_id}/delete")
+        self.assertEqual(delete_goal_response.status_code, 302)
+
+        missing_response = self.client.get(f"/api/goals/{goal_id}")
+        self.assertEqual(missing_response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

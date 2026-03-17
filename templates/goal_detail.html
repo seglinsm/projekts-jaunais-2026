@@ -9,7 +9,14 @@
 
 {% block content %}
 <section class="detail-topbar">
-    <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Atpakaļ uz paneli</a>
+    <div class="detail-topbar-actions">
+        <a class="button-link subtle-link" href="{{ url_for('dashboard') }}">Atpakaļ uz paneli</a>
+        <form action="{{ url_for('delete_goal_route', goal_id=goal.id) }}" method="post">
+            <button type="submit" class="danger-button" onclick="return confirm('Vai tiešām dzēst šo mērķi?');">
+                Dzēst mērķi
+            </button>
+        </form>
+    </div>
     <div class="detail-topbar-meta">
         <span class="status-note">Mērķa datums: {{ goal.targetDate if goal.targetDate else "Nav iestatīts" }}</span>
         <span class="status-note">Ieraksti: {{ goal.contributionCount }}</span>
@@ -209,10 +216,32 @@
                             <td>{{ contribution.note if contribution.note else "Nav piezīmes" }}</td>
                             <td class="table-action">
                                 {% if contribution.type == "manual" %}
-                                    <form action="{{ url_for('delete_contribution_route', contribution_id=contribution.id) }}" method="post">
-                                        <input type="hidden" name="goal_id" value="{{ goal.id }}">
-                                        <button type="submit" class="text-button">Dzēst</button>
-                                    </form>
+                                    <div class="table-action-stack">
+                                        <details class="inline-editor">
+                                            <summary>Rediģēt</summary>
+                                            <form action="{{ url_for('update_contribution_route', contribution_id=contribution.id) }}" method="post" class="inline-editor-form">
+                                                <input type="hidden" name="goal_id" value="{{ goal.id }}">
+                                                <input type="hidden" name="type" value="manual">
+                                                <label>
+                                                    Summa
+                                                    <input type="number" name="amount" min="0.01" step="0.01" value="{{ contribution.amount }}" required>
+                                                </label>
+                                                <label>
+                                                    Datums
+                                                    <input type="date" name="date" value="{{ contribution.date }}" required>
+                                                </label>
+                                                <label>
+                                                    Piezīme
+                                                    <input type="text" name="note" value="{{ contribution.note }}">
+                                                </label>
+                                                <button type="submit">Saglabāt</button>
+                                            </form>
+                                        </details>
+                                        <form action="{{ url_for('delete_contribution_route', contribution_id=contribution.id) }}" method="post">
+                                            <input type="hidden" name="goal_id" value="{{ goal.id }}">
+                                            <button type="submit" class="text-button">Dzēst</button>
+                                        </form>
+                                    </div>
                                 {% else %}
                                     <span class="muted">Ģenerēts</span>
                                 {% endif %}

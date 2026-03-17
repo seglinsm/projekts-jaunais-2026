@@ -81,6 +81,17 @@
         return currencyFormatter.format(Number(value || 0));
     }
 
+    function renderGoalTitle(goal, className) {
+        if (pageMode !== "live") {
+            return `<span class="${className}">${goal.title}</span>`;
+        }
+        return `<a class="${className}" href="/goals/${goal.id}">${goal.title}</a>`;
+    }
+
+    function renderEmptyCard(message) {
+        return `<div class="empty-card">${message}</div>`;
+    }
+
     function buildOverview(goals) {
         const totalTarget = goals.reduce((sum, goal) => sum + Number(goal.targetAmount || 0), 0);
         const totalSaved = goals.reduce((sum, goal) => sum + Number(goal.totalSaved || 0), 0);
@@ -151,13 +162,13 @@
         monthDisplay.textContent = shortMonthFormatter.format(currentMonth);
         todayLabel.textContent = fullDateFormatter.format(currentMonth);
 
-        monthInput.addEventListener("change", () => {
+        monthInput.onchange = () => {
             if (!monthInput.value) {
                 return;
             }
             const [year, month] = monthInput.value.split("-");
             monthDisplay.textContent = shortMonthFormatter.format(new Date(Number(year), Number(month) - 1, 1));
-        });
+        };
 
         modeBadge.textContent = mode === "live" ? "Tiešsaistes API režīms" : "Demo priekšskatījuma režīms";
         modeBadge.className = `mode-box ${mode === "live" ? "mode-live" : "mode-demo"}`;
@@ -167,7 +178,7 @@
         const sidebarGoals = document.getElementById("sidebarGoals");
 
         if (!goals.length) {
-            sidebarGoals.innerHTML = `<div class="sidebar-goal"><div class="sidebar-goal-meta">Vēl nav pieejamu mērķu.</div></div>`;
+            sidebarGoals.innerHTML = `<div class="sidebar-goal"><div class="sidebar-goal-meta">Vēl nav pieejamu mērķu. Pievieno pirmo mērķi zemāk esošajā formā.</div></div>`;
             return;
         }
 
@@ -177,7 +188,7 @@
                 (goal) => `
                     <div class="sidebar-goal">
                         <div class="sidebar-goal-top">
-                            <span class="sidebar-goal-title">${goal.title}</span>
+                            ${renderGoalTitle(goal, "sidebar-goal-title sidebar-goal-link")}
                             <span class="sidebar-goal-progress">${clampProgress(goal.progressPercentage).toFixed(0)}%</span>
                         </div>
                         <div class="mini-progress">
@@ -193,13 +204,18 @@
     function renderMainProgress(goals) {
         const goalProgressList = document.getElementById("goalProgressList");
 
+        if (!goals.length) {
+            goalProgressList.innerHTML = renderEmptyCard("Vēl nav neviena mērķa, ko parādīt progresā.");
+            return;
+        }
+
         goalProgressList.innerHTML = goals
             .map(
                 (goal) => `
                     <div class="goal-progress-card">
                         <div class="goal-progress-top">
                             <div>
-                                <div class="goal-progress-title">${goal.title}</div>
+                                <div>${renderGoalTitle(goal, "goal-progress-title goal-title-link")}</div>
                                 <div class="goal-progress-meta">${goal.estimateText || "Vēl nav prognozes."}</div>
                             </div>
                             <strong>${clampProgress(goal.progressPercentage).toFixed(0)}%</strong>
@@ -237,6 +253,12 @@
 
     function renderPace(goals) {
         const paceList = document.getElementById("paceList");
+
+        if (!goals.length) {
+            paceList.innerHTML = renderEmptyCard("Mēneša temps būs redzams, kad būs vismaz viens mērķis.");
+            return;
+        }
+
         const maxRate = Math.max(...goals.map((goal) => Number(goal.monthlySavingRate || 0)), 1);
 
         paceList.innerHTML = goals
@@ -246,7 +268,7 @@
                 return `
                     <div class="compact-progress-card">
                         <div class="compact-progress-top">
-                            <span>${goal.title}</span>
+                            ${renderGoalTitle(goal, "goal-title-link")}
                             <strong>${formatCurrency(goal.monthlySavingRate)}/mēn.</strong>
                         </div>
                         <div class="track-thin">
@@ -261,6 +283,12 @@
 
     function renderUpcoming(goals) {
         const upcomingList = document.getElementById("upcomingList");
+
+        if (!goals.length) {
+            upcomingList.innerHTML = renderEmptyCard("Šeit parādīsies tuvākie mērķu datumi.");
+            return;
+        }
+
         const sortedGoals = [...goals].sort((a, b) => {
             const aDate = a.targetDate || "9999-12-31";
             const bDate = b.targetDate || "9999-12-31";
@@ -272,7 +300,7 @@
             .map(
                 (goal) => `
                     <div class="upcoming-card">
-                        <div class="upcoming-title">${goal.title}</div>
+                        <div>${renderGoalTitle(goal, "upcoming-title goal-title-link")}</div>
                         <div class="upcoming-date">${goal.targetDate || "Nav mērķa datuma"}</div>
                         <div class="upcoming-meta">${formatCurrency(goal.remainingAmount)} atlicis uzkrāt</div>
                     </div>
@@ -284,12 +312,17 @@
     function renderRecommendations(goals) {
         const recommendationList = document.getElementById("recommendationList");
 
+        if (!goals.length) {
+            recommendationList.innerHTML = renderEmptyCard("Ieteikumi parādīsies, kad būs saglabāti mērķi un iemaksas.");
+            return;
+        }
+
         recommendationList.innerHTML = goals
             .slice(0, 4)
             .map(
                 (goal) => `
                     <div class="recommendation-card">
-                        <div class="recommendation-card-title">${goal.title}</div>
+                        <div>${renderGoalTitle(goal, "recommendation-card-title goal-title-link")}</div>
                         <div class="recommendation-card-text">${goal.recommendation || "Vēl nav ieteikuma."}</div>
                     </div>
                 `
@@ -300,11 +333,20 @@
     function renderTable(goals) {
         const goalTableBody = document.getElementById("goalTableBody");
 
+        if (!goals.length) {
+            goalTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-table-row">Vēl nav mērķu. Izveido pirmo mērķi, lai tabula piepildītos.</td>
+                </tr>
+            `;
+            return;
+        }
+
         goalTableBody.innerHTML = goals
             .map(
                 (goal) => `
                     <tr>
-                        <td>${goal.title}</td>
+                        <td>${renderGoalTitle(goal, "table-link")}</td>
                         <td>${formatCurrency(goal.totalSaved)}</td>
                         <td>${formatCurrency(goal.remainingAmount)}</td>
                         <td class="table-progress-cell">

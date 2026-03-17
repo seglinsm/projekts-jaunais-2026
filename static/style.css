@@ -481,6 +481,7 @@ button:hover {
     padding: 0.2rem 0 0.7rem;
 }
 
+.detail-topbar-actions,
 .detail-topbar-meta {
     display: flex;
     flex-wrap: wrap;
@@ -607,6 +608,38 @@ h2 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.8rem;
     margin-bottom: 0.8rem;
+}
+
+.table-action-stack {
+    display: grid;
+    gap: 0.55rem;
+    min-width: 220px;
+}
+
+.inline-editor {
+    border: 1px solid #e4e4e4;
+    background: #fbfbfb;
+    padding: 0.55rem;
+}
+
+.inline-editor summary {
+    cursor: pointer;
+    color: #1374bf;
+    font-weight: 700;
+}
+
+.inline-editor-form {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.7rem;
+}
+
+.inline-editor-form label {
+    font-size: 0.88rem;
+}
+
+.inline-editor-form input {
+    padding: 0.6rem 0.7rem;
 }
 
 @media (max-width: 1180px) {

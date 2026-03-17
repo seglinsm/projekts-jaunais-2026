@@ -124,6 +124,21 @@ def _register_web_routes(app):
             return redirect(url_for("goal_detail", goal_id=redirect_goal_id))
         return redirect(url_for("dashboard"))
 
+    @app.post("/contributions/<int:contribution_id>/edit")
+    def update_contribution_route(contribution_id):
+        goal_id = request.form.get("goal_id")
+        redirect_goal_id = goal_id or ""
+        try:
+            contribution = update_contribution(get_db(), contribution_id, request.form)
+            redirect_goal_id = redirect_goal_id or str(contribution["goalId"])
+            flash("Iemaksa atjaunināta.", "success")
+        except (ValidationError, NotFoundError) as error:
+            flash(str(error), "error")
+
+        if redirect_goal_id:
+            return redirect(url_for("goal_detail", goal_id=redirect_goal_id))
+        return redirect(url_for("dashboard"))
+
     @app.post("/goals/<int:goal_id>/recurring-plan")
     def recurring_plan_route(goal_id):
         try:
