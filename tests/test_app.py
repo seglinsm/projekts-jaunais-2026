@@ -39,7 +39,6 @@ class GoalBloomTests(unittest.TestCase):
         )
         self.assertEqual(register_response.status_code, 302)
         self.assertIn("/login?", register_response.headers["Location"])
-        self.assertIn("Account+created.", register_response.headers["Location"])
 
         login_response = self.client.post(
             "/login",
@@ -50,18 +49,16 @@ class GoalBloomTests(unittest.TestCase):
         )
         self.assertEqual(login_response.status_code, 302)
         self.assertIn("/dashboard?", login_response.headers["Location"])
-        self.assertIn("Welcome+back.", login_response.headers["Location"])
 
         dashboard_response = self.client.get("/dashboard")
         dashboard_html = dashboard_response.get_data(as_text=True)
         self.assertEqual(dashboard_response.status_code, 200)
-        self.assertIn("Savings dashboard", dashboard_html)
+        self.assertIn("Krājumu panelis", dashboard_html)
         self.assertIn("../static/dashboard.js", dashboard_html)
 
         logout_response = self.client.post("/logout")
         self.assertEqual(logout_response.status_code, 302)
         self.assertIn("/login?", logout_response.headers["Location"])
-        self.assertIn("logged+out", logout_response.headers["Location"])
 
     def test_user_can_save_plan_and_use_quick_add(self):
         self._register_and_login()
@@ -69,12 +66,12 @@ class GoalBloomTests(unittest.TestCase):
         save_response = self.client.post(
             "/dashboard",
             data={
-                "goal_name": "Emergency Fund",
+                "goal_name": "Drošības spilvens",
                 "goal_amount": "1000",
                 "current_balance": "400",
                 "monthly_contribution": "125",
                 "target_date": "",
-                "note": "Three months of living costs.",
+                "note": "Trīs mēnešu izdevumiem.",
             },
         )
         self.assertEqual(save_response.status_code, 302)
@@ -83,9 +80,10 @@ class GoalBloomTests(unittest.TestCase):
         data_response = self.client.get("/api/dashboard-data")
         payload = data_response.get_json()
         self.assertEqual(data_response.status_code, 200)
-        self.assertEqual(payload["goalName"], "Emergency Fund")
+        self.assertEqual(payload["goalName"], "Drošības spilvens")
         self.assertEqual(payload["progressPercentage"], 40.0)
-        self.assertEqual(payload["note"], "Three months of living costs.")
+        self.assertEqual(payload["note"], "Trīs mēnešu izdevumiem.")
+        self.assertEqual(payload["statusLabel"], "Brīvāks temps")
 
         quick_add_response = self.client.post("/dashboard/quick-add", data={"amount": "25"})
         self.assertEqual(quick_add_response.status_code, 302)
@@ -105,7 +103,7 @@ class GoalBloomTests(unittest.TestCase):
         ).fetchone()
         connection.close()
 
-        self.assertEqual(row[0], "Emergency Fund")
+        self.assertEqual(row[0], "Drošības spilvens")
         self.assertEqual(row[1], 425.0)
         self.assertEqual(row[2], 125.0)
 

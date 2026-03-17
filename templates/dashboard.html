@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | GoalBloom</title>
+    <title>Panelis | GoalBloom</title>
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body class="dashboard-page">
@@ -16,15 +16,15 @@
                 <span class="brand-mark">GB</span>
                 <span>
                     <strong>GoalBloom</strong>
-                    <small>Simple savings tracker</small>
+                    <small>Vienkāršs krājumu panelis</small>
                 </span>
             </a>
 
             <nav class="top-nav">
-                <span id="sessionBadge" class="nav-chip">Loading...</span>
-                <a class="nav-link" href="/dashboard">Dashboard</a>
+                <span id="sessionBadge" class="nav-chip">Ielādē...</span>
+                <a class="nav-link" href="/dashboard">Panelis</a>
                 <form action="/logout" method="post">
-                    <button type="submit" class="nav-button">Log out</button>
+                    <button type="submit" class="nav-button">Iziet</button>
                 </form>
             </nav>
         </header>
@@ -33,10 +33,10 @@
 
         <section class="hero-panel">
             <div>
-                <p class="eyebrow">Dashboard</p>
-                <h1 id="heroTitle">Savings dashboard</h1>
+                <p class="eyebrow">Panelis</p>
+                <h1 id="heroTitle">Krājumu panelis</h1>
                 <p id="heroCopy" class="hero-copy">
-                    Track one clear target, update it quickly, and keep the important numbers visible.
+                    Seko vienam skaidram mērķim, ātri to atjaunini un turi svarīgos ciparus acu priekšā.
                 </p>
             </div>
 
@@ -48,7 +48,7 @@
                     </svg>
                     <div class="ring-label">
                         <strong id="progressRingLabel">0%</strong>
-                        <span id="progressStatus">Ready to start</span>
+                        <span id="progressStatus">Var sākt</span>
                     </div>
                 </div>
             </div>
@@ -58,44 +58,44 @@
             <article class="panel-card form-card">
                 <div class="panel-head">
                     <div>
-                        <p class="eyebrow">Plan</p>
-                        <h2>Goal details</h2>
+                        <p class="eyebrow">Plāns</p>
+                        <h2>Mērķa info</h2>
                     </div>
-                    <span id="modeBadge" class="soft-label">Loading data</span>
+                    <span id="modeBadge" class="soft-label">Ielādē datus</span>
                 </div>
 
                 <form class="dashboard-form" action="/dashboard" method="post">
                     <label>
-                        Goal name
-                        <input id="goalNameInput" type="text" name="goal_name" maxlength="60" placeholder="Emergency fund" required>
+                        Mērķa nosaukums
+                        <input id="goalNameInput" type="text" name="goal_name" maxlength="60" placeholder="Drošības spilvens" required>
                     </label>
                     <label>
-                        Goal amount
+                        Mērķa summa
                         <input id="goalAmountInput" type="number" name="goal_amount" min="0.01" step="0.01" placeholder="5000" required>
                     </label>
                     <label>
-                        Current balance
+                        Pašreizējais atlikums
                         <input id="currentBalanceInput" type="number" name="current_balance" min="0" step="0.01" placeholder="1200" required>
                     </label>
                     <label>
-                        Monthly contribution
+                        Ikmēneša iemaksa
                         <input id="monthlyContributionInput" type="number" name="monthly_contribution" min="0" step="0.01" placeholder="150" required>
                     </label>
                     <label>
-                        Target date
+                        Mērķa datums
                         <input id="targetDateInput" type="date" name="target_date">
                     </label>
                     <label>
-                        Note
-                        <textarea id="noteInput" name="note" rows="4" maxlength="240" placeholder="Why are you saving for this?"></textarea>
+                        Piezīme
+                        <textarea id="noteInput" name="note" rows="4" maxlength="240" placeholder="Kāpēc tu šim krāj?"></textarea>
                     </label>
-                    <button type="submit" class="primary-button">Save plan</button>
+                    <button type="submit" class="primary-button">Saglabāt plānu</button>
                 </form>
 
                 <div class="quick-add-block">
                     <div>
-                        <h3>Quick add</h3>
-                        <p>Bump the current balance without editing the full form.</p>
+                        <h3>Ātrā iemaksa</h3>
+                        <p>Pieliec pie atlikuma, neatverot visu formu.</p>
                     </div>
 
                     <div class="quick-add-list">
@@ -118,55 +118,55 @@
             <article class="panel-card summary-card">
                 <div class="panel-head">
                     <div>
-                        <p class="eyebrow">Snapshot</p>
-                        <h2>Progress view</h2>
+                        <p class="eyebrow">Kopsavilkums</p>
+                        <h2>Progresa skats</h2>
                     </div>
-                    <span id="remainingBadge" class="soft-label">EUR 0.00 left</span>
+                    <span id="remainingBadge" class="soft-label">0,00 € atlicis</span>
                 </div>
 
                 <div class="money-row">
                     <div>
-                        <span class="metric-label">Current balance</span>
-                        <strong id="currentBalanceValue" class="money-number">EUR 0.00</strong>
+                        <span class="metric-label">Pašreizējais atlikums</span>
+                        <strong id="currentBalanceValue" class="money-number">0,00 €</strong>
                     </div>
                     <div>
-                        <span class="metric-label">Goal</span>
-                        <strong id="goalAmountValue" class="money-number small">EUR 0.00</strong>
+                        <span class="metric-label">Mērķis</span>
+                        <strong id="goalAmountValue" class="money-number small">0,00 €</strong>
                     </div>
                 </div>
 
-                <div class="progress-track" aria-label="Goal progress">
+                <div class="progress-track" aria-label="Mērķa progress">
                     <div id="progressBarFill" class="progress-fill" style="width: 0%;"></div>
                 </div>
 
                 <div class="metric-grid">
                     <div class="metric-box">
-                        <span class="metric-label">Remaining</span>
-                        <strong id="remainingValue">EUR 0.00</strong>
+                        <span class="metric-label">Atlicis</span>
+                        <strong id="remainingValue">0,00 €</strong>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">Monthly plan</span>
-                        <strong id="monthlyPlanValue">EUR 0.00</strong>
+                        <span class="metric-label">Mēneša plāns</span>
+                        <strong id="monthlyPlanValue">0,00 €</strong>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">Target date</span>
-                        <strong id="targetDateValue">No target date</strong>
+                        <span class="metric-label">Mērķa datums</span>
+                        <strong id="targetDateValue">Nav mērķa datuma</strong>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">Required pace</span>
-                        <strong id="requiredPaceValue">Flexible</strong>
+                        <span class="metric-label">Vajadzīgais temps</span>
+                        <strong id="requiredPaceValue">Brīvs</strong>
                     </div>
                 </div>
 
-                <p id="forecastText" class="insight">Loading your savings forecast...</p>
-                <p id="timelineText" class="subtle-copy">Checking the current plan.</p>
+                <p id="forecastText" class="insight">Ielādē tavu progresa prognozi...</p>
+                <p id="timelineText" class="subtle-copy">Pārbauda pašreizējo plānu.</p>
             </article>
 
             <article class="panel-card milestones-card">
                 <div class="panel-head">
                     <div>
-                        <p class="eyebrow">Milestones</p>
-                        <h2>Mini wins</h2>
+                        <p class="eyebrow">Posmi</p>
+                        <h2>Mazie uzvari</h2>
                     </div>
                 </div>
 
@@ -177,23 +177,23 @@
                     <span class="milestone-pill" data-milestone="100">100%</span>
                 </div>
 
-                <p id="nextMilestoneText" class="subtle-copy">Your next milestone will appear here.</p>
+                <p id="nextMilestoneText" class="subtle-copy">Tavs nākamais progresa posms parādīsies te.</p>
             </article>
 
             <article class="panel-card notes-card">
                 <div class="panel-head">
                     <div>
-                        <p class="eyebrow">Focus</p>
-                        <h2>What matters now</h2>
+                        <p class="eyebrow">Svarīgākais</p>
+                        <h2>Kas svarīgs tagad</h2>
                     </div>
                 </div>
 
                 <p id="focusLine" class="focus-line">
-                    Loading target date information...
+                    Ielādē mērķa datuma info...
                 </p>
 
                 <div id="noteCard" class="note-card note-card-empty">
-                    Add a short note if you want a reminder of why this goal matters.
+                    Pievieno īsu piezīmi, ja gribi sev atgādināt, kāpēc šis mērķis ir svarīgs.
                 </div>
             </article>
         </section>

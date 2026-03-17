@@ -11,6 +11,12 @@ MILESTONES = (25, 50, 75, 100)
 QUICK_AMOUNTS = (10, 25, 50)
 
 
+def _format_currency(value):
+    amount = float(value or 0)
+    whole, fraction = f"{amount:,.2f}".split(".")
+    return f"{whole.replace(',', ' ')},{fraction} €"
+
+
 class ValidationError(ValueError):
     pass
 
@@ -31,7 +37,7 @@ def register_user(connection, payload):
         (username,),
     ).fetchone()
     if existing is not None:
-        raise ValidationError("That username is already taken.")
+        raise ValidationError("Šis lietotājvārds jau ir aizņemts.")
 
     cursor = connection.execute(
         """
@@ -49,7 +55,7 @@ def authenticate_user(connection, payload):
     password = payload.get("password") or ""
 
     if not username or not password:
-        raise AuthenticationError("Enter both your username and password.")
+        raise AuthenticationError("Ievadi gan lietotājvārdu, gan paroli.")
 
     row = connection.execute(
         """
@@ -60,7 +66,7 @@ def authenticate_user(connection, payload):
         (username,),
     ).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):
-        raise AuthenticationError("Incorrect username or password.")
+        raise AuthenticationError("Nepareizs lietotājvārds vai parole.")
 
     return _serialize_user(row)
 
@@ -86,15 +92,15 @@ def get_dashboard_data(connection, user_id):
 
 def save_profile(connection, user_id, payload):
     goal_name = _require_goal_name(payload.get("goal_name"))
-    goal_amount = _require_amount(payload.get("goal_amount"), "goal amount", allow_zero=False)
+    goal_amount = _require_amount(payload.get("goal_amount"), "mērķa summu", allow_zero=False)
     current_balance = _require_amount(
         payload.get("current_balance"),
-        "current balance",
+        "pašreizējo atlikumu",
         allow_zero=True,
     )
     monthly_contribution = _require_amount(
         payload.get("monthly_contribution"),
-        "monthly contribution",
+        "ikmēneša iemaksu",
         allow_zero=True,
     )
     target_date = _optional_date(payload.get("target_date"))
@@ -138,9 +144,9 @@ def save_profile(connection, user_id, payload):
 def add_quick_amount(connection, user_id, payload):
     row = _get_profile_row(connection, user_id)
     if row is None:
-        raise ValidationError("Save a goal first before using quick add.")
+        raise ValidationError("Vispirms saglabā mērķi, tad lieto ātro iemaksu.")
 
-    amount = _require_amount(payload.get("amount"), "quick add amount", allow_zero=False)
+    amount = _require_amount(payload.get("amount"), "ātrās iemaksas summu", allow_zero=False)
     new_balance = round(float(row["current_balance"]) + amount, 2)
 
     connection.execute(
@@ -198,11 +204,11 @@ def _build_dashboard_data(row):
             "progressPercentage": 0.0,
             "visualProgressPercentage": 0.0,
             "requiredMonthlyAmount": None,
-            "statusLabel": "Ready to start",
+            "statusLabel": "Var sākt",
             "statusTone": "calm",
-            "forecastText": "Enter a goal and your current balance to see your progress.",
-            "timelineText": "A monthly contribution helps you estimate when you can finish.",
-            "nextMilestoneText": "Your first milestone will appear after you save a plan.",
+            "forecastText": "Ievadi mērķi un pašreizējo atlikumu, lai redzētu progresu.",
+            "timelineText": "Ikmēneša iemaksa palīdz saprast, kad vari tikt līdz mērķim.",
+            "nextMilestoneText": "Pirmais progresa posms parādīsies pēc plāna saglabāšanas.",
             "daysUntilTarget": None,
             "milestones": _build_milestones(0.0),
             "quickAmounts": QUICK_AMOUNTS,
@@ -214,58 +220,54 @@ def _build_dashboard_data(row):
     visual_progress = min(raw_progress, 100.0)
     required_monthly = None
     days_until_target = None
-    status_label = "Flexible pace"
+    status_label = "Brīvāks temps"
     status_tone = "calm"
-    timeline_text = "Add a target date to see whether your monthly plan is strong enough."
+    timeline_text = "Pievieno mērķa datumu, lai redzētu, vai tavs mēneša plāns ir pietiekams."
 
     if remaining_amount <= 0:
-        forecast_text = "You already reached this goal."
-        status_label = "Goal reached"
+        forecast_text = "Tu šo mērķi jau esi sasniedzis."
+        status_label = "Mērķis sasniegts"
         status_tone = "good"
-        timeline_text = "Everything after this point is extra margin."
+        timeline_text = "Viss pēc šī punkta jau ir ekstra rezerve."
     elif monthly_contribution > 0:
         months_to_goal = max(math.ceil(remaining_amount / monthly_contribution), 1)
-        month_label = "month" if months_to_goal == 1 else "months"
-        forecast_text = (
-            f"At your current pace, you need about {months_to_goal} more {month_label}."
-        )
+        month_label = "mēnesi" if months_to_goal == 1 else "mēnešus"
+        forecast_text = f"Ar pašreizējo tempu tev vajadzēs vēl apmēram {months_to_goal} {month_label}."
     else:
-        forecast_text = "Add a monthly contribution to unlock a finish estimate."
+        forecast_text = "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku."
 
     if target_date:
         target = date.fromisoformat(target_date)
         days_until_target = (target - today).days
 
         if remaining_amount <= 0:
-            status_label = "Goal reached"
+            status_label = "Mērķis sasniegts"
             status_tone = "good"
             required_monthly = 0.0
-            timeline_text = "You beat the target. Nice."
+            timeline_text = "Mērķa datums tev vairs nav šķērslis. Smuki."
         elif days_until_target < 0:
-            status_label = "Deadline passed"
+            status_label = "Datums ir garām"
             status_tone = "alert"
-            timeline_text = "Your target date has already passed. Extend it or raise your savings pace."
+            timeline_text = "Tavs mērķa datums jau ir pagājis. Pabīdi to vai palielini krāšanas tempu."
         else:
             months_until_target = max(days_until_target / 30.44, 0.1)
             required_monthly = round(remaining_amount / months_until_target, 2)
-            timeline_text = (
-                f"You need roughly EUR {required_monthly:,.2f} per month to hit the target date."
-            )
+            timeline_text = f"Lai paspētu līdz datumam, tev vajag apmēram {_format_currency(required_monthly)} mēnesī."
             if monthly_contribution <= 0:
-                status_label = "No monthly plan"
+                status_label = "Nav mēneša plāna"
                 status_tone = "warning"
             elif monthly_contribution + 0.009 >= required_monthly:
-                status_label = "On track"
+                status_label = "Viss iet labi"
                 status_tone = "good"
             else:
-                status_label = "Needs a boost"
+                status_label = "Jāpiespiež vairāk"
                 status_tone = "warning"
 
     next_milestone = next((value for value in MILESTONES if raw_progress < value), None)
     if next_milestone is None:
-        next_milestone_text = "All milestones cleared."
+        next_milestone_text = "Visi progresa posmi ir sasniegti."
     else:
-        next_milestone_text = f"{next_milestone}% is your next milestone."
+        next_milestone_text = f"Nākamais posms ir {next_milestone}%."
 
     return {
         "hasSavedPlan": has_saved_plan,
@@ -312,46 +314,46 @@ def _serialize_user(row):
 def _require_username(value):
     username = (value or "").strip()
     if len(username) < 3:
-        raise ValidationError("Username must be at least 3 characters long.")
+        raise ValidationError("Lietotājvārdam jābūt vismaz 3 simbolus garam.")
     if len(username) > 24:
-        raise ValidationError("Username must be 24 characters or fewer.")
+        raise ValidationError("Lietotājvārdam jābūt ne garākam par 24 simboliem.")
     if re.fullmatch(r"[A-Za-z0-9_]+", username) is None:
-        raise ValidationError("Username can use letters, numbers, and underscores only.")
+        raise ValidationError("Lietotājvārdā drīkst lietot tikai burtus, ciparus un apakšsvītru.")
     return username
 
 
 def _require_password(password, confirmation):
     value = password or ""
     if len(value) < 6:
-        raise ValidationError("Password must be at least 6 characters long.")
+        raise ValidationError("Parolei jābūt vismaz 6 simbolus garai.")
     if confirmation != value:
-        raise ValidationError("Passwords do not match.")
+        raise ValidationError("Paroles nesakrīt.")
     return value
 
 
 def _require_goal_name(value):
     goal_name = (value or "").strip()
     if not goal_name:
-        raise ValidationError("Goal name is required.")
+        raise ValidationError("Mērķa nosaukums ir obligāts.")
     if len(goal_name) > 60:
-        raise ValidationError("Goal name must stay under 60 characters.")
+        raise ValidationError("Mērķa nosaukumam jābūt īsākam par 60 simboliem.")
     return goal_name
 
 
 def _require_amount(value, label, allow_zero):
     raw_value = "" if value is None else str(value).strip()
     if raw_value == "":
-        raise ValidationError(f"Enter a {label}.")
+        raise ValidationError(f"Ievadi {label}.")
 
     try:
         amount = round(float(raw_value), 2)
     except ValueError as error:
-        raise ValidationError(f"Enter a valid {label}.") from error
+        raise ValidationError(f"Ievadi korektu {label}.") from error
 
     minimum = 0.0 if allow_zero else 0.01
     if amount < minimum or (not allow_zero and amount == 0):
-        comparator = "zero or more" if allow_zero else "more than zero"
-        raise ValidationError(f"{label.capitalize()} must be {comparator}.")
+        comparator = "0 vai lielākai" if allow_zero else "lielākai par 0"
+        raise ValidationError(f"{label[:1].upper() + label[1:]} jābūt {comparator}.")
     return amount
 
 
@@ -363,7 +365,7 @@ def _optional_date(value):
     try:
         date.fromisoformat(raw_value)
     except ValueError as error:
-        raise ValidationError("Enter a valid target date.") from error
+        raise ValidationError("Ievadi korektu mērķa datumu.") from error
     return raw_value
 
 

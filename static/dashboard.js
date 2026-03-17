@@ -1,22 +1,22 @@
 (function () {
     const DEMO_DATA = {
-        username: "Preview user",
+        username: "Demo lietotājs",
         hasSavedPlan: true,
-        goalName: "Trip to Italy",
+        goalName: "Ceļojums uz Itāliju",
         goalAmount: 2500,
         currentBalance: 925,
         monthlyContribution: 180,
         targetDate: "2026-09-30",
-        note: "Flights, hotel, and food budget.",
+        note: "Lidojumiem, viesnīcai un ēdienam.",
         remainingAmount: 1575,
         progressPercentage: 37.0,
         visualProgressPercentage: 37.0,
         requiredMonthlyAmount: 224.5,
-        statusLabel: "Needs a boost",
+        statusLabel: "Jāpiespiež vairāk",
         statusTone: "warning",
-        forecastText: "At your current pace, you need about 9 more months.",
-        timelineText: "You need roughly EUR 224.50 per month to hit the target date.",
-        nextMilestoneText: "50% is your next milestone.",
+        forecastText: "Ar pašreizējo tempu tev vajadzēs vēl apmēram 9 mēnešus.",
+        timelineText: "Lai paspētu līdz datumam, tev vajag apmēram 224,50 € mēnesī.",
+        nextMilestoneText: "Nākamais posms ir 50%.",
         daysUntilTarget: 197,
         milestones: [
             { label: "25%", reached: true },
@@ -30,10 +30,10 @@
 
     function formatCurrency(value) {
         const amount = Number(value || 0);
-        return `EUR ${amount.toLocaleString(undefined, {
+        return `${amount.toLocaleString("lv-LV", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-        })}`;
+        })} €`;
     }
 
     function formatPercent(value) {
@@ -43,7 +43,7 @@
 
     function formatDate(value) {
         if (!value) {
-            return "No target date";
+            return "Nav mērķa datuma";
         }
 
         const date = new Date(`${value}T00:00:00`);
@@ -51,7 +51,7 @@
             return value;
         }
 
-        return date.toLocaleDateString(undefined, {
+        return date.toLocaleDateString("lv-LV", {
             year: "numeric",
             month: "short",
             day: "numeric",
@@ -100,18 +100,18 @@
     function renderDashboard(data, mode) {
         const previewMode = mode !== "live";
 
-        setText("sessionBadge", previewMode ? "Preview mode" : `Signed in as ${data.username}`);
-        setText("modeBadge", previewMode ? "Preview demo data" : "Live project data");
-        setText("heroTitle", data.goalName || "Build your first savings goal");
+        setText("sessionBadge", previewMode ? "Priekšskatījuma režīms" : `Ielogojies kā ${data.username}`);
+        setText("modeBadge", previewMode ? "Rāda demo datus" : "Rāda tavus datus");
+        setText("heroTitle", data.goalName || "Izveido savu pirmo mērķi");
         setText(
             "heroCopy",
             previewMode
-                ? "This preview keeps the layout visible even outside Flask. Run the server for real login, saved data, and form actions."
-                : "Track one clear target, update it quickly, and keep the important numbers visible."
+                ? "Šis priekšskatījums rāda lapas izskatu arī ārpus Flask. Palaid serveri, ja gribi īstu ieeju, saglabātus datus un strādājošas formas."
+                : "Seko vienam skaidram mērķim, ātri to atjaunini un turi svarīgos ciparus acu priekšā."
         );
 
         setText("progressRingLabel", formatPercent(data.progressPercentage));
-        setText("progressStatus", data.statusLabel || "Ready to start");
+        setText("progressStatus", data.statusLabel || "Var sākt");
         updateRing(data.visualProgressPercentage);
 
         setValue("goalNameInput", data.goalName || "");
@@ -121,7 +121,7 @@
         setValue("targetDateInput", data.targetDate || "");
         setValue("noteInput", data.note || "");
 
-        setText("remainingBadge", `${formatCurrency(data.remainingAmount)} left`);
+        setText("remainingBadge", `${formatCurrency(data.remainingAmount)} atlicis`);
         setText("currentBalanceValue", formatCurrency(data.currentBalance));
         setText("goalAmountValue", formatCurrency(data.goalAmount));
         setText("remainingValue", formatCurrency(data.remainingAmount));
@@ -129,11 +129,11 @@
         setText("targetDateValue", formatDate(data.targetDate));
         setText(
             "requiredPaceValue",
-            data.requiredMonthlyAmount == null ? "Flexible" : formatCurrency(data.requiredMonthlyAmount)
+            data.requiredMonthlyAmount == null ? "Brīvs" : formatCurrency(data.requiredMonthlyAmount)
         );
-        setText("forecastText", data.forecastText || "Add a monthly contribution to unlock a finish estimate.");
-        setText("timelineText", data.timelineText || "Set a target date to check whether your pace is enough.");
-        setText("nextMilestoneText", data.nextMilestoneText || "Your next milestone will appear here.");
+        setText("forecastText", data.forecastText || "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku.");
+        setText("timelineText", data.timelineText || "Uzliec mērķa datumu, lai redzētu, vai tavs temps ir pietiekams.");
+        setText("nextMilestoneText", data.nextMilestoneText || "Tavs nākamais progresa posms parādīsies te.");
 
         const progressBar = document.getElementById("progressBarFill");
         if (progressBar) {
@@ -141,13 +141,13 @@
         }
 
         const focusLine = data.daysUntilTarget == null
-            ? "No deadline set yet. That keeps the plan flexible, but it also removes the pace check."
-            : `${data.daysUntilTarget} days remain until your target date.`;
+            ? "Mērķa datums vēl nav uzlikts. Tas dod brīvību, bet neļauj pārbaudīt tempu."
+            : `Līdz mērķa datumam palikušas ${data.daysUntilTarget} dienas.`;
         setText("focusLine", focusLine);
 
         const noteCard = document.getElementById("noteCard");
         if (noteCard) {
-            noteCard.textContent = data.note || "Add a short note if you want a reminder of why this goal matters.";
+            noteCard.textContent = data.note || "Pievieno īsu piezīmi, ja gribi sev atgādināt, kāpēc šis mērķis ir svarīgs.";
             noteCard.classList.toggle("note-card-empty", !data.note);
         }
 
@@ -170,7 +170,7 @@
             });
 
             if (!response.ok) {
-                throw new Error(`Dashboard data request failed with ${response.status}`);
+                throw new Error(`Paneļa datu pieprasījums neizdevās ar statusu ${response.status}`);
             }
 
             const data = await response.json();

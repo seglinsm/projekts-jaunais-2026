@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | GoalBloom</title>
+    <title>Ieeja | GoalBloom</title>
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body class="auth-page">
@@ -16,13 +16,13 @@
                 <span class="brand-mark">GB</span>
                 <span>
                     <strong>GoalBloom</strong>
-                    <small>Simple savings tracker</small>
+                    <small>Vienkāršs krājumu panelis</small>
                 </span>
             </a>
 
             <nav class="top-nav">
-                <a class="nav-link" href="/login">Login</a>
-                <a class="nav-button" href="/register">Register</a>
+                <a class="nav-link" href="/login">Ieeja</a>
+                <a class="nav-button" href="/register">Reģistrēties</a>
             </nav>
         </header>
 
@@ -31,49 +31,49 @@
         <section class="auth-layout">
             <article class="auth-copy">
                 <div>
-                    <p class="eyebrow">Login</p>
-                    <h1>Track one goal clearly.</h1>
+                    <p class="eyebrow">Ieeja</p>
+                    <h1>Seko vienam mērķim bez liekām lietām.</h1>
                     <p>
-                        This version keeps the same project logic, but the template is now a standalone page,
-                        closer to the attached repo and easier to preview.
+                        Šī versija saglabā to pašu projekta loģiku, bet pati lapa tagad ir patstāvīga,
+                        tuvāka pievienotajam repo un vieglāk parādāma.
                     </p>
                 </div>
 
                 <div class="feature-list">
                     <div class="feature-card">
-                        <strong>One clear dashboard</strong>
-                        <span>Goal amount, current balance, progress bar, and milestones.</span>
+                        <strong>Viens skaidrs panelis</strong>
+                        <span>Mērķa summa, pašreizējais atlikums, progresa josla un posmi.</span>
                     </div>
                     <div class="feature-card">
-                        <strong>Quick add buttons</strong>
-                        <span>Update balance fast during the demo.</span>
+                        <strong>Ātrās iemaksas pogas</strong>
+                        <span>Demo laikā vari ātri pielikt klāt atlikumu.</span>
                     </div>
                     <div class="feature-card">
-                        <strong>Teacher-friendly flow</strong>
-                        <span>Register, log in, edit the goal, then show the updates live.</span>
+                        <strong>Ērta demonstrācija</strong>
+                        <span>Reģistrējies, ieej, pamaini mērķi un uzreiz parādi izmaiņas.</span>
                     </div>
                 </div>
             </article>
 
             <article class="auth-panel">
-                <p class="eyebrow">Welcome back</p>
-                <h2>Log in</h2>
+                <p class="eyebrow">Atkal klāt</p>
+                <h2>Ieej kontā</h2>
 
                 <form class="auth-form" action="/login" method="post">
                     <label>
-                        Username
-                        <input id="usernameInput" type="text" name="username" placeholder="your_name" required>
+                        Lietotājvārds
+                        <input id="usernameInput" type="text" name="username" placeholder="mans_vards" required>
                     </label>
                     <label>
-                        Password
-                        <input type="password" name="password" placeholder="At least 6 characters" required>
+                        Parole
+                        <input type="password" name="password" placeholder="Vismaz 6 simboli" required>
                     </label>
-                    <button type="submit" class="primary-button">Open dashboard</button>
+                    <button type="submit" class="primary-button">Atvērt paneli</button>
                 </form>
 
                 <footer>
-                    New here?
-                    <a class="inline-link" href="/register">Create an account</a>
+                    Vēl nav konta?
+                    <a class="inline-link" href="/register">Izveido kontu</a>
                 </footer>
             </article>
         </section>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | GoalBloom</title>
+    <title>Reģistrācija | GoalBloom</title>
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body class="auth-page">
@@ -16,13 +16,13 @@
                 <span class="brand-mark">GB</span>
                 <span>
                     <strong>GoalBloom</strong>
-                    <small>Simple savings tracker</small>
+                    <small>Vienkāršs krājumu panelis</small>
                 </span>
             </a>
 
             <nav class="top-nav">
-                <a class="nav-link" href="/login">Login</a>
-                <a class="nav-button" href="/register">Register</a>
+                <a class="nav-link" href="/login">Ieeja</a>
+                <a class="nav-button" href="/register">Reģistrēties</a>
             </nav>
         </header>
 
@@ -31,53 +31,53 @@
         <section class="auth-layout">
             <article class="auth-copy">
                 <div>
-                    <p class="eyebrow">Register</p>
-                    <h1>Start your savings plan.</h1>
+                    <p class="eyebrow">Reģistrācija</p>
+                    <h1>Sāc savu krāšanas plānu.</h1>
                     <p>
-                        The backend still handles authentication and storage, but the page itself is now easier to
-                        preview and present.
+                        Aizmugure joprojām rūpējas par ieiešanu un datu glabāšanu, bet pati lapa tagad ir
+                        vieglāk apskatāma un parādāma.
                     </p>
                 </div>
 
                 <div class="feature-list">
                     <div class="feature-card">
-                        <strong>Goal amount</strong>
-                        <span>Store the target and current progress.</span>
+                        <strong>Mērķa summa</strong>
+                        <span>Saglabā mērķi un pašreizējo progresu.</span>
                     </div>
                     <div class="feature-card">
-                        <strong>Monthly pace</strong>
-                        <span>Show whether the target date is realistic.</span>
+                        <strong>Mēneša temps</strong>
+                        <span>Parāda, vai mērķa datums ir reāls.</span>
                     </div>
                     <div class="feature-card">
-                        <strong>Presentation mode</strong>
-                        <span>Dashboard can fall back to demo data if opened outside Flask.</span>
+                        <strong>Prezentācijas režīms</strong>
+                        <span>Ja paneli atver ārpus Flask, tas rāda demo datus.</span>
                     </div>
                 </div>
             </article>
 
             <article class="auth-panel">
-                <p class="eyebrow">Create account</p>
-                <h2>Register</h2>
+                <p class="eyebrow">Jauns konts</p>
+                <h2>Reģistrēties</h2>
 
                 <form class="auth-form" action="/register" method="post">
                     <label>
-                        Username
-                        <input type="text" name="username" maxlength="24" placeholder="your_name" required>
+                        Lietotājvārds
+                        <input type="text" name="username" maxlength="24" placeholder="mans_vards" required>
                     </label>
                     <label>
-                        Password
-                        <input type="password" name="password" placeholder="At least 6 characters" required>
+                        Parole
+                        <input type="password" name="password" placeholder="Vismaz 6 simboli" required>
                     </label>
                     <label>
-                        Confirm password
-                        <input type="password" name="confirm_password" placeholder="Repeat your password" required>
+                        Atkārto paroli
+                        <input type="password" name="confirm_password" placeholder="Ievadi paroli vēlreiz" required>
                     </label>
-                    <button type="submit" class="primary-button">Create account</button>
+                    <button type="submit" class="primary-button">Izveidot kontu</button>
                 </form>
 
                 <footer>
-                    Already registered?
-                    <a class="inline-link" href="/login">Go to login</a>
+                    Jau esi reģistrējies?
+                    <a class="inline-link" href="/login">Ej uz ieeju</a>
                 </footer>
             </article>
         </section>

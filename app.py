@@ -32,7 +32,7 @@ def _login_required(view):
         user = get_user_by_id(get_db(), user_id)
         if user is None:
             session.clear()
-            return _redirect_with_notice("login", "Your session expired. Please log in again.", "error")
+            return _redirect_with_notice("login", "Sesija beidzās. Ieej vēlreiz.", "error")
 
         return view(*args, **kwargs)
 
@@ -71,7 +71,7 @@ def _register_routes(app):
                 user = register_user(get_db(), request.form)
                 return _redirect_with_notice(
                     "login",
-                    "Account created. You can log in now.",
+                    "Konts izveidots. Tagad vari ieiet.",
                     "success",
                     username=user["username"],
                 )
@@ -90,7 +90,7 @@ def _register_routes(app):
                 user = authenticate_user(get_db(), request.form)
                 session.clear()
                 session["user_id"] = user["id"]
-                return _redirect_with_notice("dashboard", "Welcome back.", "success")
+                return _redirect_with_notice("dashboard", "Prieks redzēt atkal.", "success")
             except AuthenticationError as error:
                 username = (request.form.get("username") or "").strip()
                 return _redirect_with_notice("login", str(error), "error", username=username)
@@ -100,7 +100,7 @@ def _register_routes(app):
     @app.route("/logout", methods=["GET", "POST"])
     def logout():
         session.clear()
-        return _redirect_with_notice("login", "You have been logged out.", "success")
+        return _redirect_with_notice("login", "Tu esi izrakstījies.", "success")
 
     @app.route("/dashboard", methods=["GET", "POST"])
     @_login_required
@@ -108,7 +108,7 @@ def _register_routes(app):
         if request.method == "POST":
             try:
                 save_profile(get_db(), session["user_id"], request.form)
-                return _redirect_with_notice("dashboard", "Your savings plan was updated.", "success")
+                return _redirect_with_notice("dashboard", "Tavs krājuma plāns ir atjaunināts.", "success")
             except ValidationError as error:
                 return _redirect_with_notice("dashboard", str(error), "error")
 
@@ -119,7 +119,7 @@ def _register_routes(app):
     def quick_add():
         try:
             add_quick_amount(get_db(), session["user_id"], request.form)
-            return _redirect_with_notice("dashboard", "Current balance updated.", "success")
+            return _redirect_with_notice("dashboard", "Pašreizējais atlikums atjaunināts.", "success")
         except ValidationError as error:
             return _redirect_with_notice("dashboard", str(error), "error")
 
@@ -144,5 +144,5 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    print("Open http://127.0.0.1:5000/ in your browser. Do not open files inside templates/ directly.")
+    print("Atver http://127.0.0.1:5000/ pārlūkā. Neatver templates mapes failus pa tiešo.")
     app.run(debug=True)
