@@ -1,181 +1,178 @@
-<!DOCTYPE html>
-<html lang="lv">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaveSprint Uzkrājumu panelis</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/dashboard.css">
-</head>
-<body>
-    <div class="app-frame">
-        <aside class="side-column">
-            <div class="brand-block">
-                <div class="brand-symbol">
-                    <i data-lucide="wallet-cards"></i>
+{% extends "base.html" %}
+
+{% block title %}Dashboard | GoalBloom{% endblock %}
+
+{% block content %}
+    <section class="hero-panel">
+        <div>
+            <p class="eyebrow">Dashboard</p>
+            <h1>{{ dashboard.goalName or "Build your first savings goal" }}</h1>
+            <p class="hero-copy">
+                {% if dashboard.hasSavedPlan %}
+                    Track one clear target, update it quickly, and keep the important numbers visible.
+                {% else %}
+                    This version keeps things intentionally small: one account, one plan, one clear progress view.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="hero-meter">
+            <span>Progress</span>
+            <strong>{{ dashboard.progressPercentage }}%</strong>
+            <small class="status-pill status-{{ dashboard.statusTone }}">{{ dashboard.statusLabel }}</small>
+        </div>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="panel-card form-card">
+            <div class="panel-head">
+                <div>
+                    <p class="eyebrow">Plan</p>
+                    <h2>Goal details</h2>
+                </div>
+                <span class="soft-label">Tiny feature: quick add buttons</span>
+            </div>
+
+            <form class="dashboard-form" action="{{ url_for('dashboard') }}" method="post">
+                <label>
+                    Goal name
+                    <input type="text" name="goal_name" maxlength="60" value="{{ dashboard.goalName }}" placeholder="Emergency fund" required>
+                </label>
+                <label>
+                    Goal amount
+                    <input type="number" name="goal_amount" min="0.01" step="0.01" value="{{ dashboard.goalAmount if dashboard.goalAmount else '' }}" placeholder="5000" required>
+                </label>
+                <label>
+                    Current balance
+                    <input type="number" name="current_balance" min="0" step="0.01" value="{{ dashboard.currentBalance if dashboard.hasSavedPlan else '' }}" placeholder="1200" required>
+                </label>
+                <label>
+                    Monthly contribution
+                    <input type="number" name="monthly_contribution" min="0" step="0.01" value="{{ dashboard.monthlyContribution if dashboard.hasSavedPlan else '' }}" placeholder="150" required>
+                </label>
+                <label>
+                    Target date
+                    <input type="date" name="target_date" value="{{ dashboard.targetDate }}">
+                </label>
+                <label>
+                    Note
+                    <textarea name="note" rows="4" maxlength="240" placeholder="Why are you saving for this?">{{ dashboard.note }}</textarea>
+                </label>
+                <button type="submit" class="primary-button">Save plan</button>
+            </form>
+
+            <div class="quick-add-block">
+                <div>
+                    <h3>Quick add</h3>
+                    <p>Bump the current balance without editing the full form.</p>
+                </div>
+
+                <div class="quick-add-list">
+                    {% for amount in dashboard.quickAmounts %}
+                        <form action="{{ url_for('quick_add') }}" method="post">
+                            <input type="hidden" name="amount" value="{{ amount }}">
+                            <button type="submit" class="secondary-button" {% if not dashboard.hasSavedPlan %}disabled{% endif %}>+{{ amount }}</button>
+                        </form>
+                    {% endfor %}
+                </div>
+            </div>
+        </article>
+
+        <article class="panel-card summary-card">
+            <div class="panel-head">
+                <div>
+                    <p class="eyebrow">Snapshot</p>
+                    <h2>Progress view</h2>
+                </div>
+                <span class="soft-label">{{ dashboard.remainingAmount|currency }} left</span>
+            </div>
+
+            <div class="money-row">
+                <div>
+                    <span class="metric-label">Current balance</span>
+                    <strong class="money-number">{{ dashboard.currentBalance|currency }}</strong>
                 </div>
                 <div>
-                    <div class="brand-title">Personīgās finanses</div>
-                    <div class="brand-subtitle">Uzkrājumu pārvaldnieks</div>
+                    <span class="metric-label">Goal</span>
+                    <strong class="money-number small">{{ dashboard.goalAmount|currency }}</strong>
                 </div>
             </div>
 
-            <nav class="side-nav">
-                <a class="side-link side-link-active" href="#">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Pašreizējais periods</span>
-                </a>
-                <a class="side-link" href="#">
-                    <i data-lucide="calendar-range"></i>
-                    <span>Gada pārskats</span>
-                </a>
-                <a class="side-link" href="#">
-                    <i data-lucide="piggy-bank"></i>
-                    <span>Uzkrājumu mērķi</span>
-                </a>
-                <a class="side-link" href="#">
-                    <i data-lucide="banknote"></i>
-                    <span>Pievienot ienākumus</span>
-                </a>
-                <a class="side-link" href="#">
-                    <i data-lucide="receipt-text"></i>
-                    <span>Pievienot izdevumus</span>
-                </a>
-                <a class="side-link" href="#">
-                    <i data-lucide="list"></i>
-                    <span>Ieraksti</span>
-                </a>
-            </nav>
+            <div class="progress-track" aria-label="Goal progress">
+                <div class="progress-fill" style="width: {{ dashboard.visualProgressPercentage }}%;"></div>
+            </div>
 
-            <section class="side-card">
-                <div class="side-card-title">Ātrie mērķi</div>
-                <div id="sidebarGoals" class="sidebar-goals"></div>
-            </section>
-        </aside>
+            <div class="metric-grid">
+                <div class="metric-box">
+                    <span class="metric-label">Remaining</span>
+                    <strong>{{ dashboard.remainingAmount|currency }}</strong>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Monthly plan</span>
+                    <strong>{{ dashboard.monthlyContribution|currency }}</strong>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Target date</span>
+                    <strong>{{ dashboard.targetDate|date_label }}</strong>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Required pace</span>
+                    <strong>
+                        {% if dashboard.requiredMonthlyAmount is not none %}
+                            {{ dashboard.requiredMonthlyAmount|currency }}
+                        {% else %}
+                            Flexible
+                        {% endif %}
+                    </strong>
+                </div>
+            </div>
 
-        <main class="main-column">
-            <header class="page-top">
+            <p class="insight">{{ dashboard.forecastText }}</p>
+            <p class="subtle-copy">{{ dashboard.timelineText }}</p>
+        </article>
+
+        <article class="panel-card milestones-card">
+            <div class="panel-head">
                 <div>
-                    <p class="page-kicker">Pašreizējais gads</p>
-                    <h1 class="page-title">Uzkrājumu panelis</h1>
+                    <p class="eyebrow">Milestones</p>
+                    <h2>Mini wins</h2>
                 </div>
-                <div class="page-actions">
-                    <label class="month-box">
-                        <span>Mēnesis</span>
-                        <strong id="monthDisplay">Pašreizējais mēnesis</strong>
-                        <input id="monthInput" type="month">
-                        <i data-lucide="calendar-days"></i>
-                    </label>
-                    <div class="status-box">
-                        <i data-lucide="clock-3"></i>
-                        <span id="todayLabel"></span>
-                    </div>
-                    <div id="modeBadge" class="mode-box">Ielādē datus</div>
+            </div>
+
+            <div class="milestone-row">
+                {% for milestone in dashboard.milestones %}
+                    <span class="milestone-pill {% if milestone.reached %}milestone-hit{% endif %}">
+                        {{ milestone.label }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <p class="subtle-copy">{{ dashboard.nextMilestoneText }}</p>
+        </article>
+
+        <article class="panel-card notes-card">
+            <div class="panel-head">
+                <div>
+                    <p class="eyebrow">Focus</p>
+                    <h2>What matters now</h2>
                 </div>
-            </header>
+            </div>
 
-            <section id="metricStrip" class="stats-row"></section>
+            {% if dashboard.daysUntilTarget is not none %}
+                <p class="focus-line">
+                    {{ dashboard.daysUntilTarget }} days remain until your target date.
+                </p>
+            {% else %}
+                <p class="focus-line">
+                    No deadline set yet. That keeps the plan flexible, but it also removes the pace check.
+                </p>
+            {% endif %}
 
-            <section class="content-grid">
-                <article class="card card-span-two">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Mērķu pārskats</p>
-                            <h2>Pašreizējais progress</h2>
-                        </div>
-                    </div>
-                    <div id="goalProgressList" class="progress-list"></div>
-                </article>
-
-                <article class="card">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Fokuss</p>
-                            <h2>Mēneša uzkrājumu temps</h2>
-                        </div>
-                    </div>
-                    <div id="paceList" class="compact-progress-list"></div>
-                </article>
-
-                <article class="card">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Termiņi</p>
-                            <h2>Gaidāmie mērķa datumi</h2>
-                        </div>
-                    </div>
-                    <div id="upcomingList" class="upcoming-list"></div>
-                </article>
-
-                <article class="card">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Padoms</p>
-                            <h2>Ieteikumi</h2>
-                        </div>
-                    </div>
-                    <div id="recommendationList" class="recommendation-list"></div>
-                </article>
-
-                <article class="card">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Summas</p>
-                            <h2>Mērķu kopsavilkums</h2>
-                        </div>
-                    </div>
-                    <div class="table-shell">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Mērķis</th>
-                                    <th>Uzkrāts</th>
-                                    <th>Atlicis</th>
-                                    <th>Progress</th>
-                                </tr>
-                            </thead>
-                            <tbody id="goalTableBody"></tbody>
-                        </table>
-                    </div>
-                </article>
-
-                <article class="card card-span-two">
-                    <div class="card-head">
-                        <div>
-                            <p class="card-kicker">Izveidot ierakstus</p>
-                            <h2>Pievienot jaunu uzkrājumu mērķi</h2>
-                        </div>
-                    </div>
-                    <form id="goalForm" class="goal-form" action="/goals" method="post">
-                        <label>
-                            Mērķa nosaukums
-                            <input type="text" name="title" placeholder="Ceļojums uz Itāliju" required>
-                        </label>
-                        <label>
-                            Mērķa summa
-                            <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
-                        </label>
-                        <label>
-                            Apraksts
-                            <textarea name="description" rows="3" placeholder="Lidojumi, viesnīca un ēdiens"></textarea>
-                        </label>
-                        <label>
-                            Mērķa datums
-                            <input type="date" name="targetDate">
-                        </label>
-                        <button type="submit" id="goalFormButton">Pievienot mērķi</button>
-                    </form>
-                    <p class="form-note" id="formNote">
-                        Atverot failu tieši, tiek izmantoti demo dati. Darbinot ar Flask, tas saglabā reālus mērķus caur API.
-                    </p>
-                </article>
-            </section>
-        </main>
-    </div>
-
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="../static/dashboard.js"></script>
-</body>
-</html>
+            {% if dashboard.note %}
+                <div class="note-card">{{ dashboard.note }}</div>
+            {% else %}
+                <div class="note-card note-card-empty">Add a short note if you want a reminder of why this goal matters.</div>
+            {% endif %}
+        </article>
+    </section>
+{% endblock %}

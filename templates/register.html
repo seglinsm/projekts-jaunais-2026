@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Register | GoalBloom{% endblock %}
+
+{% block content %}
+    <section class="auth-layout">
+        <article class="auth-copy">
+            <div>
+                <p class="eyebrow">Register</p>
+                <h1>Start your savings plan.</h1>
+                <p>
+                    Make a simple account, set one target, and use the dashboard to see how close you are.
+                    The scope stays intentionally basic.
+                </p>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-card">
+                    <strong>Goal amount</strong>
+                    <span>Store a target amount and your current balance.</span>
+                </div>
+                <div class="feature-card">
+                    <strong>Monthly pace</strong>
+                    <span>See whether your contribution is enough for the selected date.</span>
+                </div>
+                <div class="feature-card">
+                    <strong>Tiny extras</strong>
+                    <span>Milestones and quick-add buttons keep it from feeling empty.</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="auth-panel">
+            <p class="eyebrow">Create account</p>
+            <h2>Register</h2>
+
+            <form class="auth-form" action="{{ url_for('register') }}" method="post">
+                <label>
+                    Username
+                    <input type="text" name="username" maxlength="24" placeholder="your_name" required>
+                </label>
+                <label>
+                    Password
+                    <input type="password" name="password" placeholder="At least 6 characters" required>
+                </label>
+                <label>
+                    Confirm password
+                    <input type="password" name="confirm_password" placeholder="Repeat your password" required>
+                </label>
+                <button type="submit" class="primary-button">Create account</button>
+            </form>
+
+            <footer>
+                Already registered?
+                <a class="inline-link" href="{{ url_for('login') }}">Go to login</a>
+            </footer>
+        </article>
+    </section>
+{% endblock %}

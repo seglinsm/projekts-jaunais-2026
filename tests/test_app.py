@@ -1,11 +1,12 @@
 import os
+import sqlite3
 import tempfile
 import unittest
 
 from app import create_app
 
 
-class SavingsApiTests(unittest.TestCase):
+class GoalBloomTests(unittest.TestCase):
     def setUp(self):
         file_descriptor, self.database_path = tempfile.mkstemp(suffix=".db")
         os.close(file_descriptor)
@@ -22,134 +23,101 @@ class SavingsApiTests(unittest.TestCase):
         if os.path.exists(self.database_path):
             os.remove(self.database_path)
 
-    def test_goal_summary_updates_with_recurring_plan_and_manual_deposits(self):
-        goal_response = self.client.post(
-            "/api/goals",
-            json={"title": "Atvaļinājums", "targetAmount": 500},
-        )
-        self.assertEqual(goal_response.status_code, 201)
-        goal_id = goal_response.get_json()["id"]
+    def test_dashboard_redirects_to_login_for_guests(self):
+        response = self.client.get("/dashboard")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response.headers["Location"])
 
-        plan_response = self.client.put(
-            f"/api/goals/{goal_id}/recurring-plan",
-            json={
-                "amount": 50,
-                "frequency": "monthly",
-                "startDate": "2026-03-01",
-                "isActive": True,
-            },
-        )
-        self.assertEqual(plan_response.status_code, 200)
-
-        first_manual = self.client.post(
-            f"/api/goals/{goal_id}/contributions",
-            json={"amount": 20, "date": "2026-03-08", "note": "Iekrāta skaidra nauda"},
-        )
-        second_manual = self.client.post(
-            f"/api/goals/{goal_id}/contributions",
-            json={"amount": 30, "date": "2026-03-15", "note": "Nedēļas nogales piemaksa"},
-        )
-        self.assertEqual(first_manual.status_code, 201)
-        self.assertEqual(second_manual.status_code, 201)
-
-        summary_response = self.client.get(f"/api/goals/{goal_id}")
-        self.assertEqual(summary_response.status_code, 200)
-        payload = summary_response.get_json()
-
-        self.assertEqual(payload["totalSaved"], 100.0)
-        self.assertEqual(payload["remainingAmount"], 400.0)
-        self.assertEqual(payload["progressPercentage"], 20.0)
-        self.assertEqual(payload["visualProgressPercentage"], 20.0)
-        self.assertEqual(payload["recurringContributionAmount"], 50.0)
-        self.assertTrue(payload["estimateText"].startswith("Ar pašreizējo tempu"))
-        self.assertEqual(len(payload["contributions"]), 3)
-
-    def test_goal_can_be_updated_and_deleted(self):
-        create_response = self.client.post(
-            "/api/goals",
-            json={"title": "Klēpjdators", "targetAmount": 1200},
-        )
-        goal_id = create_response.get_json()["id"]
-
-        update_response = self.client.put(
-            f"/api/goals/{goal_id}",
-            json={
-                "title": "Klēpjdatora uzlabojums",
-                "targetAmount": 1400,
-                "description": "Skolas un programmēšanas darbam",
-            },
-        )
-        self.assertEqual(update_response.status_code, 200)
-        self.assertEqual(update_response.get_json()["title"], "Klēpjdatora uzlabojums")
-
-        delete_response = self.client.delete(f"/api/goals/{goal_id}")
-        self.assertEqual(delete_response.status_code, 204)
-
-        missing_response = self.client.get(f"/api/goals/{goal_id}")
-        self.assertEqual(missing_response.status_code, 404)
-
-    def test_web_goal_flow_supports_editing_and_deleting(self):
-        create_response = self.client.post(
-            "/goals",
+    def test_user_can_register_login_and_logout(self):
+        register_response = self.client.post(
+            "/register",
             data={
-                "title": "Velosipēds",
-                "targetAmount": "300",
-                "description": "Pilsētas braucieniem",
-                "targetDate": "2026-09-01",
+                "username": "demo_user",
+                "password": "secret123",
+                "confirm_password": "secret123",
             },
+            follow_redirects=True,
         )
-        self.assertEqual(create_response.status_code, 302)
+        self.assertEqual(register_response.status_code, 200)
+        self.assertIn("Account created", register_response.get_data(as_text=True))
 
-        goals_response = self.client.get("/api/goals")
-        self.assertEqual(goals_response.status_code, 200)
-        goal_id = goals_response.get_json()["items"][0]["id"]
-
-        dashboard_response = self.client.get("/")
-        dashboard_html = dashboard_response.get_data(as_text=True)
-        self.assertEqual(dashboard_response.status_code, 200)
-        self.assertIn("SaveSprint Uzkrājumu panelis", dashboard_html)
-        self.assertIn('action="/goals"', dashboard_html)
-
-        add_contribution_response = self.client.post(
-            f"/goals/{goal_id}/contributions",
+        login_response = self.client.post(
+            "/login",
             data={
-                "amount": "45",
-                "date": "2026-03-10",
-                "note": "Kabatas nauda",
-                "type": "manual",
+                "username": "demo_user",
+                "password": "secret123",
             },
+            follow_redirects=True,
         )
-        self.assertEqual(add_contribution_response.status_code, 302)
+        login_html = login_response.get_data(as_text=True)
+        self.assertEqual(login_response.status_code, 200)
+        self.assertIn("Signed in as demo_user", login_html)
+        self.assertIn("Build your first savings goal", login_html)
 
-        contributions_response = self.client.get(f"/api/goals/{goal_id}/contributions")
-        self.assertEqual(contributions_response.status_code, 200)
-        contribution_id = contributions_response.get_json()["items"][0]["id"]
+        logout_response = self.client.post("/logout", follow_redirects=True)
+        self.assertEqual(logout_response.status_code, 200)
+        self.assertIn("You have been logged out", logout_response.get_data(as_text=True))
 
-        update_contribution_response = self.client.post(
-            f"/contributions/{contribution_id}/edit",
+    def test_user_can_save_plan_and_use_quick_add(self):
+        self._register_and_login()
+
+        save_response = self.client.post(
+            "/dashboard",
             data={
-                "goal_id": str(goal_id),
-                "amount": "55",
-                "date": "2026-03-11",
-                "note": "Atjaunināta piezīme",
-                "type": "manual",
+                "goal_name": "Emergency Fund",
+                "goal_amount": "1000",
+                "current_balance": "400",
+                "monthly_contribution": "125",
+                "target_date": "",
+                "note": "Three months of living costs.",
+            },
+            follow_redirects=True,
+        )
+        save_html = save_response.get_data(as_text=True)
+        self.assertEqual(save_response.status_code, 200)
+        self.assertIn("Emergency Fund", save_html)
+        self.assertIn("40.0%", save_html)
+        self.assertIn("Three months of living costs.", save_html)
+
+        quick_add_response = self.client.post(
+            "/dashboard/quick-add",
+            data={"amount": "25"},
+            follow_redirects=True,
+        )
+        quick_add_html = quick_add_response.get_data(as_text=True)
+        self.assertEqual(quick_add_response.status_code, 200)
+        self.assertIn("42.5%", quick_add_html)
+        self.assertIn("Current balance updated", quick_add_html)
+
+        connection = sqlite3.connect(self.database_path)
+        row = connection.execute(
+            """
+            SELECT goal_name, current_balance, monthly_contribution
+            FROM savings_profiles
+            """
+        ).fetchone()
+        connection.close()
+
+        self.assertEqual(row[0], "Emergency Fund")
+        self.assertEqual(row[1], 425.0)
+        self.assertEqual(row[2], 125.0)
+
+    def _register_and_login(self):
+        self.client.post(
+            "/register",
+            data={
+                "username": "demo_user",
+                "password": "secret123",
+                "confirm_password": "secret123",
             },
         )
-        self.assertEqual(update_contribution_response.status_code, 302)
-
-        detail_response = self.client.get(f"/goals/{goal_id}")
-        detail_html = detail_response.get_data(as_text=True)
-        self.assertEqual(detail_response.status_code, 200)
-        self.assertIn("Dzēst mērķi", detail_html)
-        self.assertIn("Rediģēt", detail_html)
-        self.assertIn("Atjaunināta piezīme", detail_html)
-        self.assertIn("Manuāla", detail_html)
-
-        delete_goal_response = self.client.post(f"/goals/{goal_id}/delete")
-        self.assertEqual(delete_goal_response.status_code, 302)
-
-        missing_response = self.client.get(f"/api/goals/{goal_id}")
-        self.assertEqual(missing_response.status_code, 404)
+        self.client.post(
+            "/login",
+            data={
+                "username": "demo_user",
+                "password": "secret123",
+            },
+        )
 
 
 if __name__ == "__main__":

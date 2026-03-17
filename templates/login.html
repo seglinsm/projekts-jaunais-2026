@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login | GoalBloom{% endblock %}
+
+{% block content %}
+    <section class="auth-layout">
+        <article class="auth-copy">
+            <div>
+                <p class="eyebrow">Login</p>
+                <h1>Track one goal clearly.</h1>
+                <p>
+                    This project takes the same login, register, and dashboard flow from the reference repo,
+                    then trims it down into a cleaner single-goal savings tracker.
+                </p>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-card">
+                    <strong>Simple auth flow</strong>
+                    <span>Create an account and go straight into the dashboard.</span>
+                </div>
+                <div class="feature-card">
+                    <strong>Progress at a glance</strong>
+                    <span>One main progress bar with the numbers that matter.</span>
+                </div>
+                <div class="feature-card">
+                    <strong>Quick add</strong>
+                    <span>Small balance updates without rewriting the whole plan.</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="auth-panel">
+            <p class="eyebrow">Welcome back</p>
+            <h2>Log in</h2>
+
+            <form class="auth-form" action="{{ url_for('login') }}" method="post">
+                <label>
+                    Username
+                    <input type="text" name="username" value="{{ suggested_username }}" placeholder="your_name" required>
+                </label>
+                <label>
+                    Password
+                    <input type="password" name="password" placeholder="At least 6 characters" required>
+                </label>
+                <button type="submit" class="primary-button">Open dashboard</button>
+            </form>
+
+            <footer>
+                New here?
+                <a class="inline-link" href="{{ url_for('register') }}">Create an account</a>
+            </footer>
+        </article>
+    </section>
+{% endblock %}

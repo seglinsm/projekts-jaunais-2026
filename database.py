@@ -5,7 +5,7 @@ from flask import current_app, g
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DATABASE = BASE_DIR / "savings.db"
+DEFAULT_DATABASE = BASE_DIR / "goalbloom.db"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 

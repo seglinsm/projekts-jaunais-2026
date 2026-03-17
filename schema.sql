@@ -1,31 +1,19 @@
-CREATE TABLE IF NOT EXISTS goals (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    target_amount REAL NOT NULL CHECK (target_amount > 0),
-    description TEXT DEFAULT '',
-    target_date TEXT,
+    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS contributions (
+CREATE TABLE IF NOT EXISTS savings_profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    goal_id INTEGER NOT NULL,
-    amount REAL NOT NULL CHECK (amount > 0),
-    date TEXT NOT NULL,
-    note TEXT DEFAULT '',
-    type TEXT NOT NULL CHECK (type IN ('manual', 'recurring')),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS recurring_plans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    goal_id INTEGER NOT NULL UNIQUE,
-    amount REAL NOT NULL CHECK (amount > 0),
-    frequency TEXT NOT NULL CHECK (frequency IN ('weekly', 'monthly')),
-    start_date TEXT NOT NULL,
-    is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL UNIQUE,
+    goal_name TEXT NOT NULL,
+    goal_amount REAL NOT NULL CHECK (goal_amount > 0),
+    current_balance REAL NOT NULL CHECK (current_balance >= 0),
+    monthly_contribution REAL NOT NULL CHECK (monthly_contribution >= 0),
+    target_date TEXT,
+    note TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

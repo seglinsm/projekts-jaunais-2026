@@ -1,679 +1,372 @@
 from __future__ import annotations
 
-import calendar
-from datetime import date, datetime, timedelta
+from datetime import date
 import math
+import re
+
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
-DAYS_PER_MONTH = 30.44
-RECENT_WINDOW_DAYS = 90
-FIELD_LABELS = {
-    "title": "Nosaukums",
-    "targetAmount": "Mērķa summa",
-    "description": "Apraksts",
-    "targetDate": "Mērķa datums",
-    "amount": "Summa",
-    "date": "Datums",
-    "note": "Piezīme",
-    "type": "Veids",
-    "frequency": "Biežums",
-    "startDate": "Sākuma datums",
-    "isActive": "Statuss",
-}
-MONTH_NAMES_LOCATIVE = [
-    "janvārī",
-    "februārī",
-    "martā",
-    "aprīlī",
-    "maijā",
-    "jūnijā",
-    "jūlijā",
-    "augustā",
-    "septembrī",
-    "oktobrī",
-    "novembrī",
-    "decembrī",
-]
+MILESTONES = (25, 50, 75, 100)
+QUICK_AMOUNTS = (10, 25, 50)
 
 
 class ValidationError(ValueError):
     pass
 
 
-class NotFoundError(LookupError):
+class AuthenticationError(ValueError):
     pass
 
 
-def list_goal_summaries(connection):
-    rows = connection.execute(
-        "SELECT * FROM goals ORDER BY COALESCE(target_date, created_at), created_at DESC"
-    ).fetchall()
-    return [get_goal_detail(connection, row["id"], include_contributions=False) for row in rows]
+def register_user(connection, payload):
+    username = _require_username(payload.get("username"))
+    password = _require_password(
+        payload.get("password"),
+        payload.get("confirm_password") or payload.get("confirmPassword"),
+    )
 
-
-def get_goal_detail(connection, goal_id, include_contributions=True):
-    goal_row = _get_goal_row(connection, goal_id)
-    _sync_recurring_contributions(connection, goal_id)
-    contribution_rows = _get_contribution_rows(connection, goal_id)
-    plan_row = _get_recurring_plan_row(connection, goal_id)
-
-    goal = _serialize_goal(goal_row)
-    contributions = [_serialize_contribution(row) for row in contribution_rows]
-    recurring_plan = _serialize_recurring_plan(plan_row) if plan_row else None
-    metrics = _calculate_metrics(goal, contributions, recurring_plan)
-
-    payload = {**goal, **metrics, "recurringPlan": recurring_plan}
-    if include_contributions:
-        payload["contributions"] = contributions
-    return payload
-
-
-def create_goal(connection, payload):
-    title = _require_text(payload.get("title"), "title")
-    target_amount = _require_positive_amount(payload.get("targetAmount"), "targetAmount")
-    description = _optional_text(payload.get("description"))
-    target_date = _optional_date(payload.get("targetDate"), "targetDate")
+    existing = connection.execute(
+        "SELECT id FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+    if existing is not None:
+        raise ValidationError("That username is already taken.")
 
     cursor = connection.execute(
         """
-        INSERT INTO goals (title, target_amount, description, target_date)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO users (username, password_hash)
+        VALUES (?, ?)
         """,
-        (title, target_amount, description, target_date),
+        (username, generate_password_hash(password)),
     )
     connection.commit()
-    return get_goal_detail(connection, cursor.lastrowid)
+    return get_user_by_id(connection, cursor.lastrowid)
 
 
-def update_goal(connection, goal_id, payload):
-    existing = _serialize_goal(_get_goal_row(connection, goal_id))
+def authenticate_user(connection, payload):
+    username = (payload.get("username") or "").strip()
+    password = payload.get("password") or ""
 
-    title = _require_text(payload.get("title", existing["title"]), "title")
-    target_amount = _require_positive_amount(
-        payload.get("targetAmount", existing["targetAmount"]),
-        "targetAmount",
-    )
-    description = _optional_text(payload.get("description", existing["description"]))
-    target_date = _optional_date(payload.get("targetDate", existing["targetDate"]), "targetDate")
+    if not username or not password:
+        raise AuthenticationError("Enter both your username and password.")
 
-    connection.execute(
-        """
-        UPDATE goals
-        SET title = ?, target_amount = ?, description = ?, target_date = ?
-        WHERE id = ?
-        """,
-        (title, target_amount, description, target_date, goal_id),
-    )
-    connection.commit()
-    return get_goal_detail(connection, goal_id)
-
-
-def delete_goal(connection, goal_id):
-    _get_goal_row(connection, goal_id)
-    connection.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
-    connection.commit()
-
-
-def list_contributions(connection, goal_id):
-    _get_goal_row(connection, goal_id)
-    _sync_recurring_contributions(connection, goal_id)
-    rows = _get_contribution_rows(connection, goal_id)
-    return [_serialize_contribution(row) for row in rows]
-
-
-def add_contribution(connection, goal_id, payload):
-    _get_goal_row(connection, goal_id)
-
-    amount = _require_positive_amount(payload.get("amount"), "amount")
-    entry_date = _optional_date(payload.get("date"), "date") or date.today().isoformat()
-    note = _optional_text(payload.get("note"))
-    contribution_type = _normalize_contribution_type(payload.get("type", "manual"))
-
-    cursor = connection.execute(
-        """
-        INSERT INTO contributions (goal_id, amount, date, note, type)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (goal_id, amount, entry_date, note, contribution_type),
-    )
-    connection.commit()
-    return get_contribution(connection, cursor.lastrowid)
-
-
-def get_contribution(connection, contribution_id):
-    row = _get_contribution_row(connection, contribution_id)
-    return _serialize_contribution(row)
-
-
-def update_contribution(connection, contribution_id, payload):
-    existing = _serialize_contribution(_get_contribution_row(connection, contribution_id))
-
-    amount = _require_positive_amount(payload.get("amount", existing["amount"]), "amount")
-    entry_date = _optional_date(payload.get("date", existing["date"]), "date") or existing["date"]
-    note = _optional_text(payload.get("note", existing["note"]))
-    contribution_type = _normalize_contribution_type(payload.get("type", existing["type"]))
-
-    connection.execute(
-        """
-        UPDATE contributions
-        SET amount = ?, date = ?, note = ?, type = ?
-        WHERE id = ?
-        """,
-        (amount, entry_date, note, contribution_type, contribution_id),
-    )
-    connection.commit()
-    return get_contribution(connection, contribution_id)
-
-
-def delete_contribution(connection, contribution_id):
-    _get_contribution_row(connection, contribution_id)
-    connection.execute("DELETE FROM contributions WHERE id = ?", (contribution_id,))
-    connection.commit()
-
-
-def get_recurring_plan(connection, goal_id):
-    _get_goal_row(connection, goal_id)
-    row = _get_recurring_plan_row(connection, goal_id)
-    return _serialize_recurring_plan(row) if row else None
-
-
-def upsert_recurring_plan(connection, goal_id, payload):
-    _get_goal_row(connection, goal_id)
-
-    amount = _require_positive_amount(payload.get("amount"), "amount")
-    frequency = _normalize_frequency(payload.get("frequency"))
-    start_date = _optional_date(payload.get("startDate"), "startDate") or date.today().isoformat()
-    is_active = _normalize_bool(payload.get("isActive", True))
-
-    existing = _get_recurring_plan_row(connection, goal_id)
-    if existing:
-        connection.execute(
-            """
-            UPDATE recurring_plans
-            SET amount = ?, frequency = ?, start_date = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE goal_id = ?
-            """,
-            (amount, frequency, start_date, int(is_active), goal_id),
-        )
-    else:
-        connection.execute(
-            """
-            INSERT INTO recurring_plans (goal_id, amount, frequency, start_date, is_active)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (goal_id, amount, frequency, start_date, int(is_active)),
-        )
-
-    connection.commit()
-    _sync_recurring_contributions(connection, goal_id)
-    return get_recurring_plan(connection, goal_id)
-
-
-def build_dashboard_overview(goals):
-    goal_count = len(goals)
-    total_target = round(sum(goal["targetAmount"] for goal in goals), 2)
-    total_saved = round(sum(goal["totalSaved"] for goal in goals), 2)
-    average_progress = round(
-        sum(goal["progressPercentage"] for goal in goals) / goal_count, 2
-    ) if goal_count else 0.0
-
-    return {
-        "goalCount": goal_count,
-        "totalTarget": total_target,
-        "totalSaved": total_saved,
-        "averageProgress": average_progress,
-    }
-
-
-def _calculate_metrics(goal, contributions, recurring_plan):
-    total_saved = round(sum(item["amount"] for item in contributions), 2)
-    remaining_amount = round(max(goal["targetAmount"] - total_saved, 0), 2)
-    progress = round((total_saved / goal["targetAmount"]) * 100, 2)
-    visual_progress = min(progress, 100.0)
-
-    recurring_monthly = 0.0
-    if recurring_plan and recurring_plan["isActive"]:
-        recurring_monthly = _to_monthly_amount(
-            recurring_plan["amount"], recurring_plan["frequency"]
-        )
-
-    recent_contributions = _recent_contributions(contributions)
-    recent_manual_contributions = [
-        item for item in recent_contributions if item["type"] == "manual"
-    ]
-    recent_manual_monthly = round(
-        sum(item["amount"] for item in recent_manual_contributions) / 3, 2
-    ) if recent_manual_contributions else 0.0
-    recent_all_monthly = round(
-        sum(item["amount"] for item in recent_contributions) / 3, 2
-    ) if recent_contributions else 0.0
-
-    if recurring_monthly > 0:
-        monthly_saving_rate = round(recurring_monthly + recent_manual_monthly, 2)
-        pace_source = "combined" if recent_manual_monthly else "recurring-plan"
-    elif len(recent_manual_contributions) >= 2:
-        monthly_saving_rate = recent_all_monthly
-        pace_source = "recent-contributions"
-    else:
-        monthly_saving_rate = 0.0
-        pace_source = "none"
-
-    estimate = _estimate_completion(
-        goal,
-        remaining_amount,
-        monthly_saving_rate,
-        pace_source,
-    )
-    recommendation = _build_recommendation(
-        goal,
-        remaining_amount,
-        progress,
-        recurring_monthly,
-        monthly_saving_rate,
-        estimate["monthsToGoal"],
-    )
-
-    return {
-        "totalSaved": total_saved,
-        "remainingAmount": remaining_amount,
-        "progressPercentage": progress,
-        "visualProgressPercentage": visual_progress,
-        "recurringContributionAmount": round(recurring_monthly, 2),
-        "recentManualMonthlyAverage": recent_manual_monthly,
-        "monthlySavingRate": monthly_saving_rate,
-        "paceSource": pace_source,
-        "estimateText": estimate["estimateText"],
-        "estimatedCompletionDate": estimate["estimatedCompletionDate"],
-        "monthsToGoal": estimate["monthsToGoal"],
-        "recommendation": recommendation,
-        "contributionCount": len(contributions),
-    }
-
-
-def _sync_recurring_contributions(connection, goal_id):
-    plan_row = _get_recurring_plan_row(connection, goal_id)
-    existing_rows = connection.execute(
-        """
-        SELECT * FROM contributions
-        WHERE goal_id = ? AND type = 'recurring'
-        ORDER BY date ASC
-        """,
-        (goal_id,),
-    ).fetchall()
-
-    if plan_row is None:
-        if existing_rows:
-            connection.execute(
-                "DELETE FROM contributions WHERE goal_id = ? AND type = 'recurring'",
-                (goal_id,),
-            )
-            connection.commit()
-        return
-
-    plan = _serialize_recurring_plan(plan_row)
-    start_date = _parse_iso_date(plan["startDate"])
-    if (not plan["isActive"]) or start_date is None or start_date > date.today():
-        if existing_rows:
-            connection.execute(
-                "DELETE FROM contributions WHERE goal_id = ? AND type = 'recurring'",
-                (goal_id,),
-            )
-            connection.commit()
-        return
-
-    expected_dates = {
-        occurrence.isoformat()
-        for occurrence in _generate_occurrence_dates(
-            start_date,
-            date.today(),
-            plan["frequency"],
-        )
-    }
-    existing_by_date = {row["date"]: row for row in existing_rows}
-    auto_note = "Izveidots automātiski no regulārā plāna"
-    has_changes = False
-
-    for row in existing_rows:
-        if row["date"] not in expected_dates:
-            connection.execute("DELETE FROM contributions WHERE id = ?", (row["id"],))
-            has_changes = True
-
-    for occurrence_date in expected_dates:
-        existing = existing_by_date.get(occurrence_date)
-        if existing is None:
-            connection.execute(
-                """
-                INSERT INTO contributions (goal_id, amount, date, note, type)
-                VALUES (?, ?, ?, ?, 'recurring')
-                """,
-                (goal_id, plan["amount"], occurrence_date, auto_note),
-            )
-            has_changes = True
-            continue
-
-        if (
-            round(float(existing["amount"]), 2) != plan["amount"]
-            or (existing["note"] or "") != auto_note
-        ):
-            connection.execute(
-                """
-                UPDATE contributions
-                SET amount = ?, note = ?
-                WHERE id = ?
-                """,
-                (plan["amount"], auto_note, existing["id"]),
-            )
-            has_changes = True
-
-    if has_changes:
-        connection.commit()
-
-
-def _estimate_completion(goal, remaining_amount, monthly_saving_rate, pace_source):
-    if remaining_amount <= 0:
-        return {
-            "estimateText": "Mērķis ir sasniegts.",
-            "estimatedCompletionDate": date.today().isoformat(),
-            "monthsToGoal": 0,
-        }
-
-    if monthly_saving_rate <= 0 or pace_source == "none":
-        return {
-            "estimateText": "Nepietiek datu, lai prognozētu mērķa sasniegšanas laiku.",
-            "estimatedCompletionDate": None,
-            "monthsToGoal": None,
-        }
-
-    months_to_goal = round(remaining_amount / monthly_saving_rate, 2)
-    completion_date = date.today() + timedelta(days=math.ceil(months_to_goal * DAYS_PER_MONTH))
-    duration_text = _format_duration(months_to_goal)
-    estimate_text = (
-        f"Ar pašreizējo tempu šo mērķi varētu sasniegt apmēram {duration_text}. "
-        f"Paredzamā pabeigšana: {_format_month_year(completion_date)}."
-    )
-
-    return {
-        "estimateText": estimate_text,
-        "estimatedCompletionDate": completion_date.isoformat(),
-        "monthsToGoal": months_to_goal,
-    }
-
-
-def _build_recommendation(
-    goal,
-    remaining_amount,
-    progress,
-    recurring_monthly,
-    monthly_saving_rate,
-    months_to_goal,
-):
-    if remaining_amount <= 0:
-        return "Šis mērķis ir sasniegts. Varat izveidot nākamo uzkrājumu mērķi."
-
-    target_date = _parse_iso_date(goal["targetDate"])
-    if target_date:
-        days_left = (target_date - date.today()).days
-        if days_left <= 0:
-            return "Mērķa datums jau ir pagājis. Pagariniet datumu vai palieliniet iemaksas."
-
-        months_left = max(days_left / DAYS_PER_MONTH, 0.1)
-        required_monthly = remaining_amount / months_left
-
-        if monthly_saving_rate <= 0:
-            return (
-                "Pašreizējais uzkrājumu temps var nebūt pietiekams, lai sasniegtu mērķa datumu. "
-                f"Mēģiniet atlikt apmēram {_format_currency_value(required_monthly)} mēnesī."
-            )
-
-        if monthly_saving_rate < required_monthly:
-            increase_needed = required_monthly - monthly_saving_rate
-            return (
-                "Pašreizējais uzkrājumu temps var nebūt pietiekams, lai sasniegtu mērķa datumu. "
-                f"Palieliniet ikmēneša uzkrājumu apmēram par {_format_currency_value(increase_needed)}."
-            )
-
-        if monthly_saving_rate >= required_monthly * 1.15:
-            return "Jūs esat priekšā plānam."
-
-    if remaining_amount <= goal["targetAmount"] * 0.1:
-        return "Mērķis ir gandrīz sasniegts."
-
-    if progress < 25 and recurring_monthly < goal["targetAmount"] * 0.05:
-        return "Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk."
-
-    if recurring_monthly > 0 and months_to_goal is not None:
-        return "Jūs stabili virzāties uz savu mērķi."
-
-    if monthly_saving_rate > 0:
-        return "Manuālās iemaksas palīdz, bet regulārs plāns padarītu progresu prognozējamāku."
-
-    return "Pievienojiet iemaksu vai izveidojiet regulāro plānu, lai sāktu virzību uz mērķi."
-
-
-def _recent_contributions(contributions):
-    cutoff = date.today() - timedelta(days=RECENT_WINDOW_DAYS)
-    recent = []
-    for contribution in contributions:
-        contribution_date = _parse_iso_date(contribution["date"])
-        if contribution_date and contribution_date >= cutoff:
-            recent.append(contribution)
-    return recent
-
-
-def _format_duration(months):
-    if months < 1:
-        weeks = max(1, math.ceil(months * 4.345))
-        if weeks == 1:
-            return "1 nedēļas laikā"
-        return f"{weeks} nedēļu laikā"
-
-    rounded_months = max(1, math.ceil(months))
-    if rounded_months == 1:
-        return "1 mēneša laikā"
-    return f"{rounded_months} mēnešu laikā"
-
-
-def _to_monthly_amount(amount, frequency):
-    if frequency == "weekly":
-        return round(amount * (52 / 12), 2)
-    return round(amount, 2)
-
-
-def _generate_occurrence_dates(start_date, end_date, frequency):
-    occurrences = []
-    current = start_date
-
-    while current <= end_date:
-        occurrences.append(current)
-        if frequency == "weekly":
-            current += timedelta(days=7)
-        else:
-            current = _add_one_month(current)
-
-    return occurrences
-
-
-def _add_one_month(current_date):
-    next_month = current_date.month + 1
-    next_year = current_date.year
-    if next_month > 12:
-        next_month = 1
-        next_year += 1
-
-    last_day = calendar.monthrange(next_year, next_month)[1]
-    return current_date.replace(
-        year=next_year,
-        month=next_month,
-        day=min(current_date.day, last_day),
-    )
-
-
-def _serialize_goal(row):
-    return {
-        "id": row["id"],
-        "title": row["title"],
-        "targetAmount": round(float(row["target_amount"]), 2),
-        "description": row["description"] or "",
-        "targetDate": row["target_date"],
-        "createdAt": row["created_at"],
-    }
-
-
-def _serialize_contribution(row):
-    return {
-        "id": row["id"],
-        "goalId": row["goal_id"],
-        "amount": round(float(row["amount"]), 2),
-        "date": row["date"],
-        "note": row["note"] or "",
-        "type": row["type"],
-        "typeLabel": _translate_contribution_type(row["type"]),
-        "createdAt": row["created_at"],
-    }
-
-
-def _serialize_recurring_plan(row):
-    return {
-        "id": row["id"],
-        "goalId": row["goal_id"],
-        "amount": round(float(row["amount"]), 2),
-        "frequency": row["frequency"],
-        "startDate": row["start_date"],
-        "isActive": bool(row["is_active"]),
-        "createdAt": row["created_at"],
-        "updatedAt": row["updated_at"],
-    }
-
-
-def _get_goal_row(connection, goal_id):
-    row = connection.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
-    if row is None:
-        raise NotFoundError(f"Mērķis ar ID {goal_id} netika atrasts.")
-    return row
-
-
-def _get_contribution_rows(connection, goal_id):
-    return connection.execute(
-        """
-        SELECT * FROM contributions
-        WHERE goal_id = ?
-        ORDER BY date DESC, id DESC
-        """,
-        (goal_id,),
-    ).fetchall()
-
-
-def _get_contribution_row(connection, contribution_id):
     row = connection.execute(
-        "SELECT * FROM contributions WHERE id = ?",
-        (contribution_id,),
+        """
+        SELECT id, username, password_hash, created_at
+        FROM users
+        WHERE username = ?
+        """,
+        (username,),
+    ).fetchone()
+    if row is None or not check_password_hash(row["password_hash"], password):
+        raise AuthenticationError("Incorrect username or password.")
+
+    return _serialize_user(row)
+
+
+def get_user_by_id(connection, user_id):
+    row = connection.execute(
+        """
+        SELECT id, username, created_at
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
     ).fetchone()
     if row is None:
-        raise NotFoundError(f"Iemaksa ar ID {contribution_id} netika atrasta.")
-    return row
+        return None
+    return _serialize_user(row)
 
 
-def _get_recurring_plan_row(connection, goal_id):
+def get_dashboard_data(connection, user_id):
+    row = _get_profile_row(connection, user_id)
+    return _build_dashboard_data(row)
+
+
+def save_profile(connection, user_id, payload):
+    goal_name = _require_goal_name(payload.get("goal_name"))
+    goal_amount = _require_amount(payload.get("goal_amount"), "goal amount", allow_zero=False)
+    current_balance = _require_amount(
+        payload.get("current_balance"),
+        "current balance",
+        allow_zero=True,
+    )
+    monthly_contribution = _require_amount(
+        payload.get("monthly_contribution"),
+        "monthly contribution",
+        allow_zero=True,
+    )
+    target_date = _optional_date(payload.get("target_date"))
+    note = _clean_note(payload.get("note"))
+
+    connection.execute(
+        """
+        INSERT INTO savings_profiles (
+            user_id,
+            goal_name,
+            goal_amount,
+            current_balance,
+            monthly_contribution,
+            target_date,
+            note
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            goal_name = excluded.goal_name,
+            goal_amount = excluded.goal_amount,
+            current_balance = excluded.current_balance,
+            monthly_contribution = excluded.monthly_contribution,
+            target_date = excluded.target_date,
+            note = excluded.note,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (
+            user_id,
+            goal_name,
+            goal_amount,
+            current_balance,
+            monthly_contribution,
+            target_date,
+            note,
+        ),
+    )
+    connection.commit()
+    return get_dashboard_data(connection, user_id)
+
+
+def add_quick_amount(connection, user_id, payload):
+    row = _get_profile_row(connection, user_id)
+    if row is None:
+        raise ValidationError("Save a goal first before using quick add.")
+
+    amount = _require_amount(payload.get("amount"), "quick add amount", allow_zero=False)
+    new_balance = round(float(row["current_balance"]) + amount, 2)
+
+    connection.execute(
+        """
+        UPDATE savings_profiles
+        SET current_balance = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+        """,
+        (new_balance, user_id),
+    )
+    connection.commit()
+    return get_dashboard_data(connection, user_id)
+
+
+def _get_profile_row(connection, user_id):
     return connection.execute(
-        "SELECT * FROM recurring_plans WHERE goal_id = ?",
-        (goal_id,),
+        """
+        SELECT
+            user_id,
+            goal_name,
+            goal_amount,
+            current_balance,
+            monthly_contribution,
+            target_date,
+            note,
+            updated_at
+        FROM savings_profiles
+        WHERE user_id = ?
+        """,
+        (user_id,),
     ).fetchone()
 
 
-def _require_text(value, field_name):
-    text = _optional_text(value)
-    if not text:
-        raise ValidationError(f'Lauks "{_field_label(field_name)}" ir obligāts.')
-    return text
+def _build_dashboard_data(row):
+    today = date.today()
+    has_saved_plan = row is not None
+    goal_name = row["goal_name"] if row else ""
+    goal_amount = round(float(row["goal_amount"]), 2) if row else 0.0
+    current_balance = round(float(row["current_balance"]), 2) if row else 0.0
+    monthly_contribution = round(float(row["monthly_contribution"]), 2) if row else 0.0
+    target_date = row["target_date"] if row else ""
+    note = row["note"] if row else ""
+    updated_at = row["updated_at"] if row else None
+
+    if goal_amount <= 0:
+        return {
+            "hasSavedPlan": False,
+            "goalName": goal_name,
+            "goalAmount": goal_amount,
+            "currentBalance": current_balance,
+            "monthlyContribution": monthly_contribution,
+            "targetDate": target_date,
+            "note": note,
+            "remainingAmount": 0.0,
+            "progressPercentage": 0.0,
+            "visualProgressPercentage": 0.0,
+            "requiredMonthlyAmount": None,
+            "statusLabel": "Ready to start",
+            "statusTone": "calm",
+            "forecastText": "Enter a goal and your current balance to see your progress.",
+            "timelineText": "A monthly contribution helps you estimate when you can finish.",
+            "nextMilestoneText": "Your first milestone will appear after you save a plan.",
+            "daysUntilTarget": None,
+            "milestones": _build_milestones(0.0),
+            "quickAmounts": QUICK_AMOUNTS,
+            "updatedAt": updated_at,
+        }
+
+    remaining_amount = round(max(goal_amount - current_balance, 0), 2)
+    raw_progress = round((current_balance / goal_amount) * 100, 1)
+    visual_progress = min(raw_progress, 100.0)
+    required_monthly = None
+    days_until_target = None
+    status_label = "Flexible pace"
+    status_tone = "calm"
+    timeline_text = "Add a target date to see whether your monthly plan is strong enough."
+
+    if remaining_amount <= 0:
+        forecast_text = "You already reached this goal."
+        status_label = "Goal reached"
+        status_tone = "good"
+        timeline_text = "Everything after this point is extra margin."
+    elif monthly_contribution > 0:
+        months_to_goal = max(math.ceil(remaining_amount / monthly_contribution), 1)
+        month_label = "month" if months_to_goal == 1 else "months"
+        forecast_text = (
+            f"At your current pace, you need about {months_to_goal} more {month_label}."
+        )
+    else:
+        forecast_text = "Add a monthly contribution to unlock a finish estimate."
+
+    if target_date:
+        target = date.fromisoformat(target_date)
+        days_until_target = (target - today).days
+
+        if remaining_amount <= 0:
+            status_label = "Goal reached"
+            status_tone = "good"
+            required_monthly = 0.0
+            timeline_text = "You beat the target. Nice."
+        elif days_until_target < 0:
+            status_label = "Deadline passed"
+            status_tone = "alert"
+            timeline_text = "Your target date has already passed. Extend it or raise your savings pace."
+        else:
+            months_until_target = max(days_until_target / 30.44, 0.1)
+            required_monthly = round(remaining_amount / months_until_target, 2)
+            timeline_text = (
+                f"You need roughly EUR {required_monthly:,.2f} per month to hit the target date."
+            )
+            if monthly_contribution <= 0:
+                status_label = "No monthly plan"
+                status_tone = "warning"
+            elif monthly_contribution + 0.009 >= required_monthly:
+                status_label = "On track"
+                status_tone = "good"
+            else:
+                status_label = "Needs a boost"
+                status_tone = "warning"
+
+    next_milestone = next((value for value in MILESTONES if raw_progress < value), None)
+    if next_milestone is None:
+        next_milestone_text = "All milestones cleared."
+    else:
+        next_milestone_text = f"{next_milestone}% is your next milestone."
+
+    return {
+        "hasSavedPlan": has_saved_plan,
+        "goalName": goal_name,
+        "goalAmount": goal_amount,
+        "currentBalance": current_balance,
+        "monthlyContribution": monthly_contribution,
+        "targetDate": target_date,
+        "note": note,
+        "remainingAmount": remaining_amount,
+        "progressPercentage": raw_progress,
+        "visualProgressPercentage": visual_progress,
+        "requiredMonthlyAmount": required_monthly,
+        "statusLabel": status_label,
+        "statusTone": status_tone,
+        "forecastText": forecast_text,
+        "timelineText": timeline_text,
+        "nextMilestoneText": next_milestone_text,
+        "daysUntilTarget": days_until_target,
+        "milestones": _build_milestones(raw_progress),
+        "quickAmounts": QUICK_AMOUNTS,
+        "updatedAt": updated_at,
+    }
 
 
-def _optional_text(value):
-    if value is None:
-        return ""
-    return str(value).strip()
+def _build_milestones(progress):
+    return [
+        {
+            "label": f"{value}%",
+            "reached": progress >= value,
+        }
+        for value in MILESTONES
+    ]
 
 
-def _require_positive_amount(value, field_name):
-    if value is None or value == "":
-        raise ValidationError(f'Lauks "{_field_label(field_name)}" ir obligāts.')
+def _serialize_user(row):
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "createdAt": row["created_at"],
+    }
+
+
+def _require_username(value):
+    username = (value or "").strip()
+    if len(username) < 3:
+        raise ValidationError("Username must be at least 3 characters long.")
+    if len(username) > 24:
+        raise ValidationError("Username must be 24 characters or fewer.")
+    if re.fullmatch(r"[A-Za-z0-9_]+", username) is None:
+        raise ValidationError("Username can use letters, numbers, and underscores only.")
+    return username
+
+
+def _require_password(password, confirmation):
+    value = password or ""
+    if len(value) < 6:
+        raise ValidationError("Password must be at least 6 characters long.")
+    if confirmation != value:
+        raise ValidationError("Passwords do not match.")
+    return value
+
+
+def _require_goal_name(value):
+    goal_name = (value or "").strip()
+    if not goal_name:
+        raise ValidationError("Goal name is required.")
+    if len(goal_name) > 60:
+        raise ValidationError("Goal name must stay under 60 characters.")
+    return goal_name
+
+
+def _require_amount(value, label, allow_zero):
+    raw_value = "" if value is None else str(value).strip()
+    if raw_value == "":
+        raise ValidationError(f"Enter a {label}.")
 
     try:
-        amount = round(float(value), 2)
-    except (TypeError, ValueError) as error:
-        raise ValidationError(
-            f'Laukam "{_field_label(field_name)}" jābūt korektam skaitlim.'
-        ) from error
+        amount = round(float(raw_value), 2)
+    except ValueError as error:
+        raise ValidationError(f"Enter a valid {label}.") from error
 
-    if amount <= 0:
-        raise ValidationError(f'Laukam "{_field_label(field_name)}" jābūt lielākam par 0.')
+    minimum = 0.0 if allow_zero else 0.01
+    if amount < minimum or (not allow_zero and amount == 0):
+        comparator = "zero or more" if allow_zero else "more than zero"
+        raise ValidationError(f"{label.capitalize()} must be {comparator}.")
     return amount
 
 
-def _optional_date(value, field_name):
-    if value in (None, ""):
+def _optional_date(value):
+    raw_value = (value or "").strip()
+    if not raw_value:
         return None
-
-    parsed = _parse_iso_date(value)
-    if parsed is None:
-        raise ValidationError(f'Laukam "{_field_label(field_name)}" jābūt YYYY-MM-DD formātā.')
-    return parsed.isoformat()
-
-
-def _parse_iso_date(value):
-    if value in (None, ""):
-        return None
-
-    if isinstance(value, date):
-        return value
 
     try:
-        return date.fromisoformat(str(value))
-    except ValueError:
-        return None
+        date.fromisoformat(raw_value)
+    except ValueError as error:
+        raise ValidationError("Enter a valid target date.") from error
+    return raw_value
 
 
-def _normalize_frequency(value):
-    frequency = _optional_text(value).lower()
-    if frequency not in {"weekly", "monthly"}:
-        raise ValidationError('Biežumam jābūt "weekly" vai "monthly".')
-    return frequency
-
-
-def _normalize_contribution_type(value):
-    contribution_type = _optional_text(value).lower() or "manual"
-    if contribution_type not in {"manual", "recurring"}:
-        raise ValidationError('Veidam jābūt "manual" vai "recurring".')
-    return contribution_type
-
-
-def _normalize_bool(value):
-    if isinstance(value, bool):
-        return value
-
-    normalized = str(value).strip().lower()
-    if normalized in {"1", "true", "yes", "on"}:
-        return True
-    if normalized in {"0", "false", "no", "off"}:
-        return False
-    raise ValidationError('Statusam jābūt "true" vai "false".')
-
-
-def _field_label(field_name):
-    return FIELD_LABELS.get(field_name, field_name)
-
-
-def _format_currency_value(amount):
-    whole, fraction = f"{float(amount):,.2f}".split(".")
-    return f"{whole.replace(',', ' ')},{fraction} €"
-
-
-def _format_month_year(value):
-    month_name = MONTH_NAMES_LOCATIVE[value.month - 1]
-    return f"{value.year}. gada {month_name}"
-
-
-def _translate_contribution_type(value):
-    return {
-        "manual": "Manuāla",
-        "recurring": "Regulāra",
-    }.get(value, value)
+def _clean_note(value):
+    note = (value or "").strip()
+    return note[:240]
