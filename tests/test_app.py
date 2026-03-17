@@ -25,7 +25,7 @@ class SavingsApiTests(unittest.TestCase):
     def test_goal_summary_updates_with_recurring_plan_and_manual_deposits(self):
         goal_response = self.client.post(
             "/api/goals",
-            json={"title": "Vacation", "targetAmount": 500},
+            json={"title": "Atvaļinājums", "targetAmount": 500},
         )
         self.assertEqual(goal_response.status_code, 201)
         goal_id = goal_response.get_json()["id"]
@@ -43,11 +43,11 @@ class SavingsApiTests(unittest.TestCase):
 
         first_manual = self.client.post(
             f"/api/goals/{goal_id}/contributions",
-            json={"amount": 20, "date": "2026-03-08", "note": "Saved cash"},
+            json={"amount": 20, "date": "2026-03-08", "note": "Iekrāta skaidra nauda"},
         )
         second_manual = self.client.post(
             f"/api/goals/{goal_id}/contributions",
-            json={"amount": 30, "date": "2026-03-15", "note": "Weekend bonus"},
+            json={"amount": 30, "date": "2026-03-15", "note": "Nedēļas nogales piemaksa"},
         )
         self.assertEqual(first_manual.status_code, 201)
         self.assertEqual(second_manual.status_code, 201)
@@ -61,7 +61,7 @@ class SavingsApiTests(unittest.TestCase):
         self.assertEqual(payload["progressPercentage"], 20.0)
         self.assertEqual(payload["visualProgressPercentage"], 20.0)
         self.assertEqual(payload["recurringContributionAmount"], 50.0)
-        self.assertTrue(payload["estimateText"].startswith("At your current pace"))
+        self.assertTrue(payload["estimateText"].startswith("Ar pašreizējo tempu"))
         self.assertEqual(len(payload["contributions"]), 3)
 
     def test_goal_can_be_updated_and_deleted(self):
@@ -74,13 +74,13 @@ class SavingsApiTests(unittest.TestCase):
         update_response = self.client.put(
             f"/api/goals/{goal_id}",
             json={
-                "title": "Laptop Upgrade",
+                "title": "Klēpjdatora uzlabojums",
                 "targetAmount": 1400,
-                "description": "School and coding work",
+                "description": "Skolas un programmēšanas darbam",
             },
         )
         self.assertEqual(update_response.status_code, 200)
-        self.assertEqual(update_response.get_json()["title"], "Laptop Upgrade")
+        self.assertEqual(update_response.get_json()["title"], "Klēpjdatora uzlabojums")
 
         delete_response = self.client.delete(f"/api/goals/{goal_id}")
         self.assertEqual(delete_response.status_code, 204)

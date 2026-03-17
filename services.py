@@ -303,7 +303,7 @@ def _sync_recurring_contributions(connection, goal_id):
         )
     }
     existing_by_date = {row["date"]: row for row in existing_rows}
-    auto_note = "Auto-generated from recurring plan"
+    auto_note = "Automātiski izveidots no regulārā plāna"
     has_changes = False
 
     for row in existing_rows:
@@ -345,14 +345,14 @@ def _sync_recurring_contributions(connection, goal_id):
 def _estimate_completion(goal, remaining_amount, monthly_saving_rate, pace_source):
     if remaining_amount <= 0:
         return {
-            "estimateText": "Goal reached.",
+            "estimateText": "Mērķis sasniegts.",
             "estimatedCompletionDate": date.today().isoformat(),
             "monthsToGoal": 0,
         }
 
     if monthly_saving_rate <= 0 or pace_source == "none":
         return {
-            "estimateText": "Not enough data to estimate completion time.",
+            "estimateText": "Nepietiek datu, lai prognozētu izpildes laiku.",
             "estimatedCompletionDate": None,
             "monthsToGoal": None,
         }
@@ -361,8 +361,8 @@ def _estimate_completion(goal, remaining_amount, monthly_saving_rate, pace_sourc
     completion_date = date.today() + timedelta(days=math.ceil(months_to_goal * DAYS_PER_MONTH))
     duration_text = _format_duration(months_to_goal)
     estimate_text = (
-        f"At your current pace, you may reach this goal in {duration_text}. "
-        f"Estimated completion: {completion_date.strftime('%B %Y')}."
+        f"Ar pašreizējo tempu šo mērķi var sasniegt pēc {duration_text}. "
+        f"Paredzamais pabeigšanas laiks: {completion_date.strftime('%B %Y')}."
     )
 
     return {
@@ -381,46 +381,46 @@ def _build_recommendation(
     months_to_goal,
 ):
     if remaining_amount <= 0:
-        return "You reached this goal. Consider creating a new savings target."
+        return "Šis mērķis ir sasniegts. Apsveriet jauna uzkrājuma mērķa izveidi."
 
     target_date = _parse_iso_date(goal["targetDate"])
     if target_date:
         days_left = (target_date - date.today()).days
         if days_left <= 0:
-            return "The target date has passed. Extend the date or increase contributions."
+            return "Mērķa datums ir pagājis. Pagariniet datumu vai palieliniet iemaksas."
 
         months_left = max(days_left / DAYS_PER_MONTH, 0.1)
         required_monthly = remaining_amount / months_left
 
         if monthly_saving_rate <= 0:
             return (
-                "Your current savings pace may not be enough to reach the target date. "
-                f"Try saving about EUR {required_monthly:.2f} per month."
+                "Pašreizējais uzkrājumu temps var nebūt pietiekams, lai sasniegtu mērķa datumu. "
+                f"Mēģiniet ik mēnesi iekrāt apmēram EUR {required_monthly:.2f}."
             )
 
         if monthly_saving_rate < required_monthly:
             increase_needed = required_monthly - monthly_saving_rate
             return (
-                "Your current savings pace may not be enough to reach the target date. "
-                f"Increase your monthly savings by about EUR {increase_needed:.2f}."
+                "Pašreizējais uzkrājumu temps var nebūt pietiekams, lai sasniegtu mērķa datumu. "
+                f"Palieliniet ikmēneša uzkrājumus par aptuveni EUR {increase_needed:.2f}."
             )
 
         if monthly_saving_rate >= required_monthly * 1.15:
-            return "You are ahead of schedule."
+            return "Jūs esat priekšā plānam."
 
     if remaining_amount <= goal["targetAmount"] * 0.1:
-        return "You are almost there."
+        return "Jūs esat gandrīz pie mērķa."
 
     if progress < 25 and recurring_monthly < goal["targetAmount"] * 0.05:
-        return "Consider increasing your regular contribution to reach your goal faster."
+        return "Apsveriet regulārās iemaksas palielināšanu, lai mērķi sasniegtu ātrāk."
 
     if recurring_monthly > 0 and months_to_goal is not None:
-        return "You are on a steady path toward your goal."
+        return "Jūs stabili virzāties uz savu mērķi."
 
     if monthly_saving_rate > 0:
-        return "Your manual deposits are helping. A recurring plan would make progress more predictable."
+        return "Jūsu manuālās iemaksas palīdz. Regulārs plāns padarītu progresu prognozējamāku."
 
-    return "Add a contribution or create a recurring plan to start building momentum."
+    return "Pievienojiet iemaksu vai izveidojiet regulāru plānu, lai sāktu uzkrāšanas tempu."
 
 
 def _recent_contributions(contributions):
@@ -436,10 +436,10 @@ def _recent_contributions(contributions):
 def _format_duration(months):
     if months < 1:
         weeks = max(1, math.ceil(months * 4.345))
-        return f"{weeks} week{'s' if weeks != 1 else ''}"
+        return f"{weeks} nedēļa" if weeks == 1 else f"{weeks} nedēļas"
 
     rounded_months = max(1, math.ceil(months))
-    return f"{rounded_months} month{'s' if rounded_months != 1 else ''}"
+    return f"{rounded_months} mēnesis{'i' if rounded_months != 1 else ''}"
 
 
 def _to_monthly_amount(amount, frequency):
@@ -516,7 +516,7 @@ def _serialize_recurring_plan(row):
 def _get_goal_row(connection, goal_id):
     row = connection.execute("SELECT * FROM goals WHERE id = ?", (goal_id,)).fetchone()
     if row is None:
-        raise NotFoundError(f"Goal {goal_id} was not found.")
+        raise NotFoundError(f"Mērķis {goal_id} netika atrasts.")
     return row
 
 
@@ -537,7 +537,7 @@ def _get_contribution_row(connection, contribution_id):
         (contribution_id,),
     ).fetchone()
     if row is None:
-        raise NotFoundError(f"Contribution {contribution_id} was not found.")
+        raise NotFoundError(f"Iemaksa {contribution_id} netika atrasta.")
     return row
 
 
@@ -551,7 +551,7 @@ def _get_recurring_plan_row(connection, goal_id):
 def _require_text(value, field_name):
     text = _optional_text(value)
     if not text:
-        raise ValidationError(f"{field_name} is required.")
+        raise ValidationError(f"Lauks {field_name} ir obligāts.")
     return text
 
 
@@ -563,15 +563,15 @@ def _optional_text(value):
 
 def _require_positive_amount(value, field_name):
     if value is None or value == "":
-        raise ValidationError(f"{field_name} is required.")
+        raise ValidationError(f"Lauks {field_name} ir obligāts.")
 
     try:
         amount = round(float(value), 2)
     except (TypeError, ValueError) as error:
-        raise ValidationError(f"{field_name} must be a valid number.") from error
+        raise ValidationError(f"Laukam {field_name} jābūt derīgam skaitlim.") from error
 
     if amount <= 0:
-        raise ValidationError(f"{field_name} must be greater than 0.")
+        raise ValidationError(f"Laukam {field_name} jābūt lielākam par 0.")
     return amount
 
 
@@ -581,7 +581,7 @@ def _optional_date(value, field_name):
 
     parsed = _parse_iso_date(value)
     if parsed is None:
-        raise ValidationError(f"{field_name} must use YYYY-MM-DD format.")
+        raise ValidationError(f"Laukam {field_name} jābūt formātā YYYY-MM-DD.")
     return parsed.isoformat()
 
 
@@ -601,14 +601,14 @@ def _parse_iso_date(value):
 def _normalize_frequency(value):
     frequency = _optional_text(value).lower()
     if frequency not in {"weekly", "monthly"}:
-        raise ValidationError("frequency must be either weekly or monthly.")
+        raise ValidationError("Laukam frequency jābūt vērtībai weekly vai monthly.")
     return frequency
 
 
 def _normalize_contribution_type(value):
     contribution_type = _optional_text(value).lower() or "manual"
     if contribution_type not in {"manual", "recurring"}:
-        raise ValidationError("type must be either manual or recurring.")
+        raise ValidationError("Laukam type jābūt vērtībai manual vai recurring.")
     return contribution_type
 
 
@@ -621,4 +621,4 @@ def _normalize_bool(value):
         return True
     if normalized in {"0", "false", "no", "off"}:
         return False
-    raise ValidationError("isActive must be true or false.")
+    raise ValidationError("Laukam isActive jābūt true vai false.")

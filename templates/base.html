@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +18,7 @@
                     <span class="light light-yellow"></span>
                     <span class="light light-green"></span>
                 </div>
-                <div class="window-caption">SaveSprint Savings Manager</div>
+                <div class="window-caption">SaveSprint Uzkrājumu pārvaldnieks</div>
                 <div class="window-actions" aria-hidden="true">
                     <span>-</span>
                     <span>[]</span>
@@ -27,28 +27,28 @@
             </div>
 
             <div class="menu-strip">
-                <span class="menu-item">File</span>
-                <span class="menu-item">Goals</span>
-                <span class="menu-item">Tools</span>
-                <span class="menu-item">View</span>
-                <span class="menu-item">Help</span>
+                <span class="menu-item">Fails</span>
+                <span class="menu-item">Mērķi</span>
+                <span class="menu-item">Rīki</span>
+                <span class="menu-item">Skats</span>
+                <span class="menu-item">Palīdzība</span>
             </div>
 
             <div class="toolbar-strip">
-                <a class="toolbar-button" href="{{ url_for('dashboard') }}" title="Dashboard">
+                <a class="toolbar-button" href="{{ url_for('dashboard') }}" title="Panelis">
                     <i data-lucide="layout-dashboard"></i>
                 </a>
-                <a class="toolbar-button" href="#create-goal" title="Create goal">
+                <a class="toolbar-button" href="#create-goal" title="Izveidot mērķi">
                     <i data-lucide="circle-plus"></i>
                 </a>
-                <a class="toolbar-button" href="/api/goals" target="_blank" rel="noreferrer" title="Open API JSON">
+                <a class="toolbar-button" href="/api/goals" target="_blank" rel="noreferrer" title="Atvērt API JSON">
                     <i data-lucide="database"></i>
                 </a>
-                <a class="toolbar-button" href="/api/health" target="_blank" rel="noreferrer" title="Health check">
+                <a class="toolbar-button" href="/api/health" target="_blank" rel="noreferrer" title="Sistēmas pārbaude">
                     <i data-lucide="shield-check"></i>
                 </a>
                 <span class="toolbar-separator" aria-hidden="true"></span>
-                <span class="toolbar-label">{% block page_banner_title %}Savings Dashboard{% endblock %}</span>
+                <span class="toolbar-label">{% block page_banner_title %}Uzkrājumu panelis{% endblock %}</span>
             </div>
         </header>
 

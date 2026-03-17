@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaveSprint Dashboard</title>
+    <title>SaveSprint Panelis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,40 +17,40 @@
                     <i data-lucide="wallet-cards"></i>
                 </div>
                 <div>
-                    <div class="brand-title">Personal Finance</div>
-                    <div class="brand-subtitle">Savings Manager</div>
+                    <div class="brand-title">Personīgās finanses</div>
+                    <div class="brand-subtitle">Uzkrājumu pārvaldnieks</div>
                 </div>
             </div>
 
             <nav class="side-nav">
                 <a class="side-link side-link-active" href="#">
                     <i data-lucide="layout-dashboard"></i>
-                    <span>Current Period</span>
+                    <span>Pašreizējais periods</span>
                 </a>
                 <a class="side-link" href="#">
                     <i data-lucide="calendar-range"></i>
-                    <span>Year Overview</span>
+                    <span>Gada pārskats</span>
                 </a>
                 <a class="side-link" href="#">
                     <i data-lucide="piggy-bank"></i>
-                    <span>Savings Goals</span>
+                    <span>Uzkrājumu mērķi</span>
                 </a>
                 <a class="side-link" href="#">
                     <i data-lucide="banknote"></i>
-                    <span>Add Income</span>
+                    <span>Pievienot ienākumus</span>
                 </a>
                 <a class="side-link" href="#">
                     <i data-lucide="receipt-text"></i>
-                    <span>Add Outcome</span>
+                    <span>Pievienot izdevumus</span>
                 </a>
                 <a class="side-link" href="#">
                     <i data-lucide="list"></i>
-                    <span>Records</span>
+                    <span>Ieraksti</span>
                 </a>
             </nav>
 
             <section class="side-card">
-                <div class="side-card-title">Quick Goals</div>
+                <div class="side-card-title">Ātrie mērķi</div>
                 <div id="sidebarGoals" class="sidebar-goals"></div>
             </section>
         </aside>
@@ -58,12 +58,12 @@
         <main class="main-column">
             <header class="page-top">
                 <div>
-                    <p class="page-kicker">Current Year</p>
-                    <h1 class="page-title">Savings Dashboard</h1>
+                    <p class="page-kicker">Pašreizējais gads</p>
+                    <h1 class="page-title">Uzkrājumu panelis</h1>
                 </div>
                 <div class="page-actions">
                     <label class="month-box">
-                        <span>Month</span>
+                        <span>Mēnesis</span>
                         <strong id="monthDisplay">November 2024</strong>
                         <input id="monthInput" type="month">
                         <i data-lucide="calendar-days"></i>
@@ -72,7 +72,7 @@
                         <i data-lucide="clock-3"></i>
                         <span id="todayLabel"></span>
                     </div>
-                    <div id="modeBadge" class="mode-box">Loading data</div>
+                    <div id="modeBadge" class="mode-box">Ielādē datus</div>
                 </div>
             </header>
 
@@ -82,8 +82,8 @@
                 <article class="card card-span-two">
                     <div class="card-head">
                         <div>
-                            <p class="card-kicker">Goals overview</p>
-                            <h2>Current progress</h2>
+                            <p class="card-kicker">Mērķu pārskats</p>
+                            <h2>Pašreizējais progress</h2>
                         </div>
                     </div>
                     <div id="goalProgressList" class="progress-list"></div>
@@ -92,8 +92,8 @@
                 <article class="card">
                     <div class="card-head">
                         <div>
-                            <p class="card-kicker">Focus</p>
-                            <h2>Monthly saving pace</h2>
+                            <p class="card-kicker">Fokuss</p>
+                            <h2>Mēnesisly saving pace</h2>
                         </div>
                     </div>
                     <div id="paceList" class="compact-progress-list"></div>
@@ -103,7 +103,7 @@
                     <div class="card-head">
                         <div>
                             <p class="card-kicker">Deadlines</p>
-                            <h2>Upcoming target dates</h2>
+                            <h2>Gaidāmie mērķa datumi</h2>
                         </div>
                     </div>
                     <div id="upcomingList" class="upcoming-list"></div>
@@ -112,8 +112,8 @@
                 <article class="card">
                     <div class="card-head">
                         <div>
-                            <p class="card-kicker">Advice</p>
-                            <h2>Recommendations</h2>
+                            <p class="card-kicker">Padoms</p>
+                            <h2>Ieteikumi</h2>
                         </div>
                     </div>
                     <div id="recommendationList" class="recommendation-list"></div>
@@ -123,16 +123,16 @@
                     <div class="card-head">
                         <div>
                             <p class="card-kicker">Numbers</p>
-                            <h2>Goal summary</h2>
+                            <h2>Mērķu kopsavilkums</h2>
                         </div>
                     </div>
                     <div class="table-shell">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Goal</th>
-                                    <th>Saved</th>
-                                    <th>Left</th>
+                                    <th>Mērķis</th>
+                                    <th>Uzkrāts</th>
+                                    <th>Atlicis</th>
                                     <th>Progress</th>
                                 </tr>
                             </thead>
@@ -144,31 +144,31 @@
                 <article class="card card-span-two">
                     <div class="card-head">
                         <div>
-                            <p class="card-kicker">Create records</p>
-                            <h2>Add a new savings goal</h2>
+                            <p class="card-kicker">Izveidot ierakstus</p>
+                            <h2>Pievienot jaunu uzkrājumu mērķi</h2>
                         </div>
                     </div>
                     <form id="goalForm" class="goal-form">
                         <label>
-                            Goal title
-                            <input type="text" name="title" placeholder="Trip to Italy" required>
+                            Mērķa nosaukums
+                            <input type="text" name="title" placeholder="Ceļojums uz Itāliju" required>
                         </label>
                         <label>
-                            Target amount
+                            Mērķa summa
                             <input type="number" name="targetAmount" min="0.01" step="0.01" placeholder="500" required>
                         </label>
                         <label>
-                            Description
-                            <textarea name="description" rows="3" placeholder="Flights, hotel, and food"></textarea>
+                            Apraksts
+                            <textarea name="description" rows="3" placeholder="Lidojumi, viesnīca un ēdiens"></textarea>
                         </label>
                         <label>
-                            Target date
+                            Mērķa datums
                             <input type="date" name="targetDate">
                         </label>
-                        <button type="submit" id="goalFormButton">Add Goal</button>
+                        <button type="submit" id="goalFormButton">Pievienot mērķi</button>
                     </form>
                     <p class="form-note" id="formNote">
-                        When the file is opened directly it uses demo data. When served by Flask it saves real goals through the API.
+                        Atverot failu tieši, tiek izmantoti demo dati. Darbinot ar Flask, tas saglabā reālus mērķus caur API.
                     </p>
                 </article>
             </section>
