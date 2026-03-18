@@ -97,13 +97,37 @@
         });
     }
 
+    function renderSummaryValues(data, waitingForInput) {
+        if (waitingForInput) {
+            setText("remainingBadge", "Gaida mērķi");
+            setText("currentBalanceValue", "Tavs atlikums");
+            setText("goalAmountValue", "Tava gala summa");
+            setText("remainingValue", "Atlikums parādīsies te");
+            setText("monthlyPlanValue", "Tava ikmēneša iemaksa");
+            setText("targetDateValue", "Tavs mērķa datums");
+            setText("requiredPaceValue", "Temps parādīsies te");
+            return;
+        }
+
+        setText("remainingBadge", `${formatCurrency(data.remainingAmount)} atlicis`);
+        setText("currentBalanceValue", formatCurrency(data.currentBalance));
+        setText("goalAmountValue", formatCurrency(data.goalAmount));
+        setText("remainingValue", formatCurrency(data.remainingAmount));
+        setText("monthlyPlanValue", formatCurrency(data.monthlyContribution));
+        setText("targetDateValue", formatDate(data.targetDate));
+        setText(
+            "requiredPaceValue",
+            data.requiredMonthlyAmount == null ? "Brīvs" : formatCurrency(data.requiredMonthlyAmount)
+        );
+    }
+
     function renderDashboard(data, mode) {
         const previewMode = mode !== "live";
         const waitingForInput = !data.hasSavedPlan;
 
         setText("sessionBadge", previewMode ? "Veidnes skats" : `Ielogojies kā ${data.username}`);
         setText("modeBadge", waitingForInput ? "Gaida tavu ievadi" : "Rāda tavus datus");
-        setText("heroTitle", data.goalName || "Tavs mērķis");
+        setText("heroTitle", data.goalName || "Tavs mērķa nosaukums");
         setText(
             "heroCopy",
             waitingForInput
@@ -122,16 +146,7 @@
         setValue("targetDateInput", data.targetDate || "");
         setValue("noteInput", data.note || "");
 
-        setText("remainingBadge", `${formatCurrency(data.remainingAmount)} atlicis`);
-        setText("currentBalanceValue", formatCurrency(data.currentBalance));
-        setText("goalAmountValue", formatCurrency(data.goalAmount));
-        setText("remainingValue", formatCurrency(data.remainingAmount));
-        setText("monthlyPlanValue", formatCurrency(data.monthlyContribution));
-        setText("targetDateValue", formatDate(data.targetDate));
-        setText(
-            "requiredPaceValue",
-            data.requiredMonthlyAmount == null ? "Brīvs" : formatCurrency(data.requiredMonthlyAmount)
-        );
+        renderSummaryValues(data, waitingForInput);
         setText("forecastText", data.forecastText || "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku.");
         setText("timelineText", data.timelineText || "Uzliec mērķa datumu, lai redzētu, vai tavs temps ir pietiekams.");
         setText("nextMilestoneText", data.nextMilestoneText || "Tavs nākamais progresa posms parādīsies te.");

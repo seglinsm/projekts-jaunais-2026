@@ -54,7 +54,7 @@ class GoalBloomTests(unittest.TestCase):
         dashboard_response = self.client.get("/dashboard")
         dashboard_html = dashboard_response.get_data(as_text=True)
         self.assertEqual(dashboard_response.status_code, 200)
-        self.assertIn("Tavs mērķis", dashboard_html)
+        self.assertIn("Tavs mērķa nosaukums", dashboard_html)
         self.assertIn("../static/dashboard.js", dashboard_html)
 
         logout_response = self.client.post("/logout")
@@ -131,6 +131,8 @@ class GoalBloomTests(unittest.TestCase):
         self.assertIn('placeholder="Tava gala summa"', html)
         self.assertIn('placeholder="Tavs pašreizējais atlikums"', html)
         self.assertIn('placeholder="Tava ikmēneša iemaksa"', html)
+        self.assertIn(">Tava gala summa<", html)
+        self.assertIn(">Tavs atlikums<", html)
         self.assertNotIn("Drošības spilvens", html)
         self.assertNotIn('placeholder="5000"', html)
 
