@@ -1,25 +1,25 @@
 (function () {
-    const DEMO_DATA = {
-        username: "Demo lietotājs",
-        hasSavedPlan: true,
-        goalName: "Ceļojums uz Itāliju",
-        goalAmount: 2500,
-        currentBalance: 925,
-        monthlyContribution: 180,
-        targetDate: "2026-09-30",
-        note: "Lidojumiem, viesnīcai un ēdienam.",
-        remainingAmount: 1575,
-        progressPercentage: 37.0,
-        visualProgressPercentage: 37.0,
-        requiredMonthlyAmount: 224.5,
-        statusLabel: "Jāpiespiež vairāk",
-        statusTone: "warning",
-        forecastText: "Ar pašreizējo tempu tev vajadzēs vēl apmēram 9 mēnešus.",
-        timelineText: "Lai paspētu līdz datumam, tev vajag apmēram 224,50 € mēnesī.",
-        nextMilestoneText: "Nākamais posms ir 50%.",
-        daysUntilTarget: 197,
+    const PREVIEW_DATA = {
+        username: "",
+        hasSavedPlan: false,
+        goalName: "",
+        goalAmount: "",
+        currentBalance: "",
+        monthlyContribution: "",
+        targetDate: "",
+        note: "",
+        remainingAmount: 0,
+        progressPercentage: 0,
+        visualProgressPercentage: 0,
+        requiredMonthlyAmount: null,
+        statusLabel: "Gaida ievadi",
+        statusTone: "calm",
+        forecastText: "Ievadi savu mērķi un summas, lai redzētu progresu.",
+        timelineText: "Kad pievienosi ikmēneša iemaksu un datumu, te redzēsi tempu.",
+        nextMilestoneText: "Pēc plāna saglabāšanas te parādīsies nākamais progresa posms.",
+        daysUntilTarget: null,
         milestones: [
-            { label: "25%", reached: true },
+            { label: "25%", reached: false },
             { label: "50%", reached: false },
             { label: "75%", reached: false },
             { label: "100%", reached: false },
@@ -99,14 +99,15 @@
 
     function renderDashboard(data, mode) {
         const previewMode = mode !== "live";
+        const waitingForInput = !data.hasSavedPlan;
 
-        setText("sessionBadge", previewMode ? "Priekšskatījuma režīms" : `Ielogojies kā ${data.username}`);
-        setText("modeBadge", previewMode ? "Rāda demo datus" : "Rāda tavus datus");
-        setText("heroTitle", data.goalName || "Izveido savu pirmo mērķi");
+        setText("sessionBadge", previewMode ? "Veidnes skats" : `Ielogojies kā ${data.username}`);
+        setText("modeBadge", waitingForInput ? "Gaida tavu ievadi" : "Rāda tavus datus");
+        setText("heroTitle", data.goalName || "Tavs mērķis");
         setText(
             "heroCopy",
-            previewMode
-                ? "Šis priekšskatījums rāda lapas izskatu arī ārpus Flask. Palaid serveri, ja gribi īstu ieeju, saglabātus datus un strādājošas formas."
+            waitingForInput
+                ? "Sāc ar mērķa nosaukumu un gala summu. Kad ievadīsi savus datus, te parādīsies tavs progress."
                 : "Seko vienam skaidram mērķim, ātri to atjaunini un turi svarīgos ciparus acu priekšā."
         );
 
@@ -157,7 +158,7 @@
 
     async function loadDashboardData() {
         if (window.location.protocol === "file:") {
-            renderDashboard(DEMO_DATA, "preview");
+            renderDashboard(PREVIEW_DATA, "preview");
             return;
         }
 
@@ -176,7 +177,7 @@
             const data = await response.json();
             renderDashboard(data, "live");
         } catch (_error) {
-            renderDashboard(DEMO_DATA, "preview");
+            renderDashboard(PREVIEW_DATA, "preview");
         }
     }
 

@@ -204,7 +204,7 @@ def _build_dashboard_data(row):
             "progressPercentage": 0.0,
             "visualProgressPercentage": 0.0,
             "requiredMonthlyAmount": None,
-            "statusLabel": "Var sākt",
+            "statusLabel": "Gaida ievadi",
             "statusTone": "calm",
             "forecastText": "Ievadi mērķi un pašreizējo atlikumu, lai redzētu progresu.",
             "timelineText": "Ikmēneša iemaksa palīdz saprast, kad vari tikt līdz mērķim.",

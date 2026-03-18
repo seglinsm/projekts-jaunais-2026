@@ -2,6 +2,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from pathlib import Path
 
 from app import create_app
 
@@ -53,7 +54,7 @@ class GoalBloomTests(unittest.TestCase):
         dashboard_response = self.client.get("/dashboard")
         dashboard_html = dashboard_response.get_data(as_text=True)
         self.assertEqual(dashboard_response.status_code, 200)
-        self.assertIn("Krājumu panelis", dashboard_html)
+        self.assertIn("Tavs mērķis", dashboard_html)
         self.assertIn("../static/dashboard.js", dashboard_html)
 
         logout_response = self.client.post("/logout")
@@ -118,6 +119,31 @@ class GoalBloomTests(unittest.TestCase):
         self.assertNotIn("{%", html)
         self.assertIn("../static/style.css", html)
         self.assertIn("../static/dashboard.js", html)
+
+    def test_dashboard_uses_empty_placeholders_by_default(self):
+        self._register_and_login()
+
+        response = self.client.get("/dashboard")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('placeholder="Tavs mērķa nosaukums"', html)
+        self.assertIn('placeholder="Tava gala summa"', html)
+        self.assertIn('placeholder="Tavs pašreizējais atlikums"', html)
+        self.assertIn('placeholder="Tava ikmēneša iemaksa"', html)
+        self.assertNotIn("Drošības spilvens", html)
+        self.assertNotIn('placeholder="5000"', html)
+
+    def test_preview_dashboard_data_stays_empty(self):
+        script_path = Path(__file__).resolve().parent.parent / "static" / "dashboard.js"
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("const PREVIEW_DATA = {", script)
+        self.assertIn('hasSavedPlan: false', script)
+        self.assertIn('goalName: ""', script)
+        self.assertIn('goalAmount: ""', script)
+        self.assertIn('statusLabel: "Gaida ievadi"', script)
+        self.assertNotIn("Ceļojums uz Itāliju", script)
 
     def _register_and_login(self):
         self.client.post(
