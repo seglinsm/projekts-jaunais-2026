@@ -29,6 +29,15 @@ class GoalBloomTesti(unittest.TestCase):
         self.assertEqual(atbilde.status_code, 302)
         self.assertIn("/ieeja", atbilde.headers["Location"])
 
+    def test_api_panela_dati_viesiem_atgriez_401_json(self):
+        atbilde = self.klients.get("/api/panela-dati")
+        saturs = atbilde.get_json()
+
+        self.assertEqual(atbilde.status_code, 401)
+        self.assertEqual(saturs["statuss"], "error")
+        self.assertEqual(saturs["kluda"], "nav_autorizets")
+        self.assertEqual(saturs["pazinojums"], "Sesija beidzās. Ieej vēlreiz.")
+
     def test_lietotajs_var_registreties_ieiet_un_iziet(self):
         registracijas_atbilde = self.klients.post(
             "/registracija",
@@ -60,6 +69,21 @@ class GoalBloomTesti(unittest.TestCase):
         iziesanas_atbilde = self.klients.post("/iziet")
         self.assertEqual(iziesanas_atbilde.status_code, 302)
         self.assertIn("/ieeja?", iziesanas_atbilde.headers["Location"])
+
+    def test_api_panela_dati_notira_nederigu_sesiju(self):
+        self._registret_un_ieiet()
+
+        with self.klients.session_transaction() as sesija:
+            sesija["lietotaja_id"] = 999999
+
+        atbilde = self.klients.get("/api/panela-dati")
+        saturs = atbilde.get_json()
+
+        self.assertEqual(atbilde.status_code, 401)
+        self.assertEqual(saturs["kluda"], "nav_autorizets")
+
+        with self.klients.session_transaction() as sesija:
+            self.assertNotIn("lietotaja_id", sesija)
 
     def test_lietotajs_var_saglabat_planu_un_izmantot_atro_iemaksu(self):
         self._registret_un_ieiet()
@@ -145,6 +169,8 @@ class GoalBloomTesti(unittest.TestCase):
         self.assertIn('merkaNosaukums: ""', skripts)
         self.assertIn('merkaSumma: ""', skripts)
         self.assertIn('statusaUzraksts: "Gaida ievadi"', skripts)
+        self.assertIn("if (response.status === 401)", skripts)
+        self.assertIn('showFlash("error"', skripts)
         self.assertNotIn("Ceļojums uz Itāliju", skripts)
 
     def _registret_un_ieiet(self):

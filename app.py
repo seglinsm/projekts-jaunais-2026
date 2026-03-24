@@ -27,17 +27,33 @@ def _novirzit_ar_pazinojumu(marsruts, pazinojums, limenis="success", **vertibas)
     return redirect(url_for(marsruts, **vertibas))
 
 
+def _neautorizeta_atbilde():
+    pazinojums = "Sesija beidzās. Ieej vēlreiz."
+    if request.path.startswith("/api/"):
+        return (
+            jsonify(
+                {
+                    "statuss": "error",
+                    "kluda": "nav_autorizets",
+                    "pazinojums": pazinojums,
+                }
+            ),
+            401,
+        )
+    return _novirzit_ar_pazinojumu("ieeja", pazinojums, "error")
+
+
 def _ieeja_nepieciesama(skats):
     @wraps(skats)
     def ietinais_skats(*args, **kwargs):
         lietotaja_id = session.get("lietotaja_id")
         if lietotaja_id is None:
-            return redirect(url_for("ieeja"))
+            return _neautorizeta_atbilde()
 
         lietotajs = iegut_lietotaju_pec_id(iegut_datubazi(), lietotaja_id)
         if lietotajs is None:
             session.clear()
-            return _novirzit_ar_pazinojumu("ieeja", "Sesija beidzās. Ieej vēlreiz.", "error")
+            return _neautorizeta_atbilde()
 
         return skats(*args, **kwargs)
 

@@ -97,6 +97,30 @@
         });
     }
 
+    function showFlash(level, text) {
+        const container = document.getElementById("pazinojumuJosla");
+        if (!container) {
+            return;
+        }
+
+        container.hidden = false;
+        container.innerHTML = "";
+
+        const flash = document.createElement("div");
+        flash.className = `flash flash-${level}`;
+        flash.textContent = text;
+        container.appendChild(flash);
+    }
+
+    function novirzitUzIeju(pazinojums) {
+        const url = new URL("/ieeja", window.location.origin);
+        if (pazinojums) {
+            url.searchParams.set("pazinojums", pazinojums);
+            url.searchParams.set("pazinojuma_limenis", "error");
+        }
+        window.location.assign(url.toString());
+    }
+
     function renderSummaryValues(data, waitingForInput) {
         if (waitingForInput) {
             setText("remainingBadge", "Gaida mērķi");
@@ -185,14 +209,46 @@
                 },
             });
 
+            if (response.status === 401) {
+                let pazinojums = "Sesija beidzās. Ieej vēlreiz.";
+
+                try {
+                    const data = await response.json();
+                    if (data && data.pazinojums) {
+                        pazinojums = data.pazinojums;
+                    }
+                } catch (_kluda) {
+                    // Ja JSON nolasīšana neizdodas, izmanto noklusēto ziņu.
+                }
+
+                novirzitUzIeju(pazinojums);
+                return;
+            }
+
+            if (response.redirected && response.url.includes("/ieeja")) {
+                novirzitUzIeju("Sesija beidzās. Ieej vēlreiz.");
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error(`Paneļa datu pieprasījums neizdevās ar statusu ${response.status}`);
+            }
+
+            const saturaTips = response.headers.get("content-type") || "";
+            if (!saturaTips.includes("application/json")) {
+                throw new Error("Paneļa datu atbilde nav JSON formātā.");
             }
 
             const data = await response.json();
             renderDashboard(data, "live");
         } catch (_error) {
             renderDashboard(PREVIEW_DATA, "preview");
+            setText("sessionBadge", "Savienojuma kļūda");
+            setText("modeBadge", "Neizdevās ielādēt");
+            setText("forecastText", "Neizdevās ielādēt paneļa datus. Pārlādē lapu vai ieej vēlreiz.");
+            setText("timelineText", "Ja problēma atkārtojas, pārbaudi vai Flask lietotne darbojas.");
+            setText("nextMilestoneText", "Progresa dati nav pieejami, kamēr nav atjaunots savienojums.");
+            showFlash("error", "Neizdevās ielādēt paneļa datus. Pārlādē lapu vai ieej vēlreiz.");
         }
     }
 

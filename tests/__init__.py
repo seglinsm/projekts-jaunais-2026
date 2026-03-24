@@ -1,0 +1,1 @@
+"""Testu pakotne GoalBloom projektam."""
