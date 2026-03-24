@@ -12,7 +12,7 @@
 
     <div class="page-shell">
         <header class="site-header">
-            <a class="brand" href="/dashboard">
+            <a class="brand" href="/panelis">
                 <span class="brand-mark">GB</span>
                 <span>
                     <strong>GoalBloom</strong>
@@ -22,14 +22,14 @@
 
             <nav class="top-nav">
                 <span id="sessionBadge" class="nav-chip">Ielādē...</span>
-                <a class="nav-link" href="/dashboard">Panelis</a>
-                <form action="/logout" method="post">
+                <a class="nav-link" href="/panelis">Panelis</a>
+                <form action="/iziet" method="post">
                     <button type="submit" class="nav-button">Iziet</button>
                 </form>
             </nav>
         </header>
 
-        <section id="noticeBanner" class="flash-stack" hidden></section>
+        <section id="pazinojumuJosla" class="flash-stack" hidden></section>
 
         <section class="hero-panel">
             <div>
@@ -64,30 +64,30 @@
                     <span id="modeBadge" class="soft-label">Gaida tavu ievadi</span>
                 </div>
 
-                <form class="dashboard-form" action="/dashboard" method="post">
+                <form class="dashboard-form" action="/panelis" method="post">
                     <label>
                         Mērķa nosaukums
-                        <input id="goalNameInput" type="text" name="goal_name" maxlength="60" placeholder="Tavs mērķa nosaukums" required>
+                        <input id="goalNameInput" type="text" name="merka_nosaukums" maxlength="60" placeholder="Tavs mērķa nosaukums" required>
                     </label>
                     <label>
                         Mērķa summa
-                        <input id="goalAmountInput" type="number" name="goal_amount" min="0.01" step="0.01" placeholder="Tava gala summa" required>
+                        <input id="goalAmountInput" type="number" name="merka_summa" min="0.01" step="0.01" placeholder="Tava gala summa" required>
                     </label>
                     <label>
                         Pašreizējais atlikums
-                        <input id="currentBalanceInput" type="number" name="current_balance" min="0" step="0.01" placeholder="Tavs pašreizējais atlikums" required>
+                        <input id="currentBalanceInput" type="number" name="pasreizejais_atlikums" min="0" step="0.01" placeholder="Tavs pašreizējais atlikums" required>
                     </label>
                     <label>
                         Ikmēneša iemaksa
-                        <input id="monthlyContributionInput" type="number" name="monthly_contribution" min="0" step="0.01" placeholder="Tava ikmēneša iemaksa" required>
+                        <input id="monthlyContributionInput" type="number" name="ikmenesa_iemaksa" min="0" step="0.01" placeholder="Tava ikmēneša iemaksa" required>
                     </label>
                     <label>
                         Mērķa datums
-                        <input id="targetDateInput" type="date" name="target_date">
+                        <input id="targetDateInput" type="date" name="merka_datums">
                     </label>
                     <label>
                         Piezīme
-                        <textarea id="noteInput" name="note" rows="4" maxlength="240" placeholder="Tava piezīme"></textarea>
+                        <textarea id="noteInput" name="piezime" rows="4" maxlength="240" placeholder="Tava piezīme"></textarea>
                     </label>
                     <button type="submit" class="primary-button">Saglabāt plānu</button>
                 </form>
@@ -99,16 +99,16 @@
                     </div>
 
                     <div class="quick-add-list">
-                        <form action="/dashboard/quick-add" method="post">
-                            <input type="hidden" name="amount" value="10">
+                        <form action="/panelis/atra-iemaksa" method="post">
+                            <input type="hidden" name="summa" value="10">
                             <button class="secondary-button quick-add-button" type="submit">+10</button>
                         </form>
-                        <form action="/dashboard/quick-add" method="post">
-                            <input type="hidden" name="amount" value="25">
+                        <form action="/panelis/atra-iemaksa" method="post">
+                            <input type="hidden" name="summa" value="25">
                             <button class="secondary-button quick-add-button" type="submit">+25</button>
                         </form>
-                        <form action="/dashboard/quick-add" method="post">
-                            <input type="hidden" name="amount" value="50">
+                        <form action="/panelis/atra-iemaksa" method="post">
+                            <input type="hidden" name="summa" value="50">
                             <button class="secondary-button quick-add-button" type="submit">+50</button>
                         </form>
                     </div>

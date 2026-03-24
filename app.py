@@ -3,146 +3,152 @@ from functools import wraps
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
-from database import DEFAULT_DATABASE, get_db, init_app as init_database_app, init_db
+from database import (
+    NOKLUSETA_DATUBAZE,
+    iegut_datubazi,
+    inicializet_datubazi,
+    inicializet_lietotni as inicializet_datubazes_lietotni,
+)
 from services import (
-    AuthenticationError,
-    ValidationError,
-    add_quick_amount,
-    authenticate_user,
-    get_dashboard_data,
-    get_user_by_id,
-    register_user,
-    save_profile,
+    AutentifikacijasKluda,
+    ValidacijasKluda,
+    autentificet_lietotaju,
+    iegut_lietotaju_pec_id,
+    iegut_panela_datus,
+    pievienot_atro_iemaksu,
+    registret_lietotaju,
+    saglabat_krajsanas_planu,
 )
 
 
-def _redirect_with_notice(endpoint, message, level="success", **values):
-    values["notice"] = message
-    values["notice_level"] = level
-    return redirect(url_for(endpoint, **values))
+def _novirzit_ar_pazinojumu(marsruts, pazinojums, limenis="success", **vertibas):
+    vertibas["pazinojums"] = pazinojums
+    vertibas["pazinojuma_limenis"] = limenis
+    return redirect(url_for(marsruts, **vertibas))
 
 
-def _login_required(view):
-    @wraps(view)
-    def wrapped_view(*args, **kwargs):
-        user_id = session.get("user_id")
-        if user_id is None:
-            return redirect(url_for("login"))
+def _ieeja_nepieciesama(skats):
+    @wraps(skats)
+    def ietinais_skats(*args, **kwargs):
+        lietotaja_id = session.get("lietotaja_id")
+        if lietotaja_id is None:
+            return redirect(url_for("ieeja"))
 
-        user = get_user_by_id(get_db(), user_id)
-        if user is None:
+        lietotajs = iegut_lietotaju_pec_id(iegut_datubazi(), lietotaja_id)
+        if lietotajs is None:
             session.clear()
-            return _redirect_with_notice("login", "Sesija beidzās. Ieej vēlreiz.", "error")
+            return _novirzit_ar_pazinojumu("ieeja", "Sesija beidzās. Ieej vēlreiz.", "error")
 
-        return view(*args, **kwargs)
+        return skats(*args, **kwargs)
 
-    return wrapped_view
+    return ietinais_skats
 
 
-def create_app(test_config=None):
-    app = Flask(__name__, template_folder="templates", static_folder="static")
-    app.config.update(
+def izveidot_lietotni(testa_konfiguracija=None):
+    lietotne = Flask(__name__, template_folder="templates", static_folder="static")
+    lietotne.config.update(
         SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "development-secret-key"),
-        DATABASE=str(DEFAULT_DATABASE),
+        DATABASE=str(NOKLUSETA_DATUBAZE),
     )
 
-    if test_config:
-        app.config.update(test_config)
+    if testa_konfiguracija:
+        lietotne.config.update(testa_konfiguracija)
 
-    init_db(app.config["DATABASE"])
-    init_database_app(app)
-    _register_routes(app)
-    return app
+    inicializet_datubazi(lietotne.config["DATABASE"])
+    inicializet_datubazes_lietotni(lietotne)
+    _registreet_marsrutus(lietotne)
+    return lietotne
 
-def _register_routes(app):
-    @app.get("/")
-    def index():
-        if session.get("user_id"):
-            return redirect(url_for("dashboard"))
-        return redirect(url_for("login"))
 
-    @app.route("/register", methods=["GET", "POST"])
-    def register():
-        if session.get("user_id"):
-            return redirect(url_for("dashboard"))
+def _registreet_marsrutus(lietotne):
+    @lietotne.get("/")
+    def sakums():
+        if session.get("lietotaja_id"):
+            return redirect(url_for("panelis"))
+        return redirect(url_for("ieeja"))
+
+    @lietotne.route("/registracija", methods=["GET", "POST"])
+    def registracija():
+        if session.get("lietotaja_id"):
+            return redirect(url_for("panelis"))
 
         if request.method == "POST":
             try:
-                user = register_user(get_db(), request.form)
-                return _redirect_with_notice(
-                    "login",
+                lietotajs = registret_lietotaju(iegut_datubazi(), request.form)
+                return _novirzit_ar_pazinojumu(
+                    "ieeja",
                     "Konts izveidots. Tagad vari ieiet.",
                     "success",
-                    username=user["username"],
+                    lietotajvards=lietotajs["lietotajvards"],
                 )
-            except ValidationError as error:
-                return _redirect_with_notice("register", str(error), "error")
+            except ValidacijasKluda as kluda:
+                return _novirzit_ar_pazinojumu("registracija", str(kluda), "error")
 
         return render_template("register.html")
 
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if session.get("user_id"):
-            return redirect(url_for("dashboard"))
+    @lietotne.route("/ieeja", methods=["GET", "POST"])
+    def ieeja():
+        if session.get("lietotaja_id"):
+            return redirect(url_for("panelis"))
 
         if request.method == "POST":
             try:
-                user = authenticate_user(get_db(), request.form)
+                lietotajs = autentificet_lietotaju(iegut_datubazi(), request.form)
                 session.clear()
-                session["user_id"] = user["id"]
-                return _redirect_with_notice("dashboard", "Prieks redzēt atkal.", "success")
-            except AuthenticationError as error:
-                username = (request.form.get("username") or "").strip()
-                return _redirect_with_notice("login", str(error), "error", username=username)
+                session["lietotaja_id"] = lietotajs["id"]
+                return _novirzit_ar_pazinojumu("panelis", "Prieks redzēt atkal.", "success")
+            except AutentifikacijasKluda as kluda:
+                lietotajvards = (request.form.get("lietotajvards") or "").strip()
+                return _novirzit_ar_pazinojumu("ieeja", str(kluda), "error", lietotajvards=lietotajvards)
 
         return render_template("login.html")
 
-    @app.route("/logout", methods=["GET", "POST"])
-    def logout():
+    @lietotne.route("/iziet", methods=["GET", "POST"])
+    def iziet():
         session.clear()
-        return _redirect_with_notice("login", "Tu esi izrakstījies.", "success")
+        return _novirzit_ar_pazinojumu("ieeja", "Tu esi izrakstījies.", "success")
 
-    @app.route("/dashboard", methods=["GET", "POST"])
-    @_login_required
-    def dashboard():
+    @lietotne.route("/panelis", methods=["GET", "POST"])
+    @_ieeja_nepieciesama
+    def panelis():
         if request.method == "POST":
             try:
-                save_profile(get_db(), session["user_id"], request.form)
-                return _redirect_with_notice("dashboard", "Tavs krājuma plāns ir atjaunināts.", "success")
-            except ValidationError as error:
-                return _redirect_with_notice("dashboard", str(error), "error")
+                saglabat_krajsanas_planu(iegut_datubazi(), session["lietotaja_id"], request.form)
+                return _novirzit_ar_pazinojumu("panelis", "Tavs krājuma plāns ir atjaunināts.", "success")
+            except ValidacijasKluda as kluda:
+                return _novirzit_ar_pazinojumu("panelis", str(kluda), "error")
 
         return render_template("dashboard.html")
 
-    @app.post("/dashboard/quick-add")
-    @_login_required
-    def quick_add():
+    @lietotne.post("/panelis/atra-iemaksa")
+    @_ieeja_nepieciesama
+    def atra_iemaksa():
         try:
-            add_quick_amount(get_db(), session["user_id"], request.form)
-            return _redirect_with_notice("dashboard", "Pašreizējais atlikums atjaunināts.", "success")
-        except ValidationError as error:
-            return _redirect_with_notice("dashboard", str(error), "error")
+            pievienot_atro_iemaksu(iegut_datubazi(), session["lietotaja_id"], request.form)
+            return _novirzit_ar_pazinojumu("panelis", "Pašreizējais atlikums atjaunināts.", "success")
+        except ValidacijasKluda as kluda:
+            return _novirzit_ar_pazinojumu("panelis", str(kluda), "error")
 
-    @app.get("/api/dashboard-data")
-    @_login_required
-    def api_dashboard_data():
-        user = get_user_by_id(get_db(), session["user_id"])
-        dashboard_data = get_dashboard_data(get_db(), session["user_id"])
+    @lietotne.get("/api/panela-dati")
+    @_ieeja_nepieciesama
+    def api_panela_dati():
+        lietotajs = iegut_lietotaju_pec_id(iegut_datubazi(), session["lietotaja_id"])
+        panela_dati = iegut_panela_datus(iegut_datubazi(), session["lietotaja_id"])
         return jsonify(
             {
-                **dashboard_data,
-                "username": user["username"],
+                **panela_dati,
+                "lietotajvards": lietotajs["lietotajvards"],
             }
         )
 
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}
+    @lietotne.get("/veseliba")
+    def veseliba():
+        return {"statuss": "ok"}
 
 
-app = create_app()
+lietotne = izveidot_lietotni()
 
 
 if __name__ == "__main__":
     print("Atver http://127.0.0.1:5000/ pārlūkā. Neatver templates mapes failus pa tiešo.")
-    app.run(debug=True)
+    lietotne.run(debug=True)

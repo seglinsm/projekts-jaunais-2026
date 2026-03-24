@@ -4,129 +4,129 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app import create_app
+from app import izveidot_lietotni
 
 
-class GoalBloomTests(unittest.TestCase):
+class GoalBloomTesti(unittest.TestCase):
     def setUp(self):
-        file_descriptor, self.database_path = tempfile.mkstemp(suffix=".db")
-        os.close(file_descriptor)
-        self.app = create_app(
+        faila_aprakstits, self.datubazes_cels = tempfile.mkstemp(suffix=".db")
+        os.close(faila_aprakstits)
+        self.lietotne = izveidot_lietotni(
             {
                 "TESTING": True,
-                "DATABASE": self.database_path,
+                "DATABASE": self.datubazes_cels,
                 "SECRET_KEY": "test-secret",
             }
         )
-        self.client = self.app.test_client()
+        self.klients = self.lietotne.test_client()
 
     def tearDown(self):
-        if os.path.exists(self.database_path):
-            os.remove(self.database_path)
+        if os.path.exists(self.datubazes_cels):
+            os.remove(self.datubazes_cels)
 
-    def test_dashboard_redirects_to_login_for_guests(self):
-        response = self.client.get("/dashboard")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/login", response.headers["Location"])
+    def test_panelis_novirza_viesus_uz_ieeju(self):
+        atbilde = self.klients.get("/panelis")
+        self.assertEqual(atbilde.status_code, 302)
+        self.assertIn("/ieeja", atbilde.headers["Location"])
 
-    def test_user_can_register_login_and_logout(self):
-        register_response = self.client.post(
-            "/register",
+    def test_lietotajs_var_registreties_ieiet_un_iziet(self):
+        registracijas_atbilde = self.klients.post(
+            "/registracija",
             data={
-                "username": "demo_user",
-                "password": "secret123",
-                "confirm_password": "secret123",
+                "lietotajvards": "demo_user",
+                "parole": "secret123",
+                "paroles_apstiprinajums": "secret123",
             },
         )
-        self.assertEqual(register_response.status_code, 302)
-        self.assertIn("/login?", register_response.headers["Location"])
+        self.assertEqual(registracijas_atbilde.status_code, 302)
+        self.assertIn("/ieeja?", registracijas_atbilde.headers["Location"])
 
-        login_response = self.client.post(
-            "/login",
+        ieejas_atbilde = self.klients.post(
+            "/ieeja",
             data={
-                "username": "demo_user",
-                "password": "secret123",
+                "lietotajvards": "demo_user",
+                "parole": "secret123",
             },
         )
-        self.assertEqual(login_response.status_code, 302)
-        self.assertIn("/dashboard?", login_response.headers["Location"])
+        self.assertEqual(ieejas_atbilde.status_code, 302)
+        self.assertIn("/panelis?", ieejas_atbilde.headers["Location"])
 
-        dashboard_response = self.client.get("/dashboard")
-        dashboard_html = dashboard_response.get_data(as_text=True)
-        self.assertEqual(dashboard_response.status_code, 200)
-        self.assertIn("Tavs mērķa nosaukums", dashboard_html)
-        self.assertIn("../static/dashboard.js", dashboard_html)
+        panela_atbilde = self.klients.get("/panelis")
+        panela_html = panela_atbilde.get_data(as_text=True)
+        self.assertEqual(panela_atbilde.status_code, 200)
+        self.assertIn("Tavs mērķa nosaukums", panela_html)
+        self.assertIn("../static/dashboard.js", panela_html)
 
-        logout_response = self.client.post("/logout")
-        self.assertEqual(logout_response.status_code, 302)
-        self.assertIn("/login?", logout_response.headers["Location"])
+        iziesanas_atbilde = self.klients.post("/iziet")
+        self.assertEqual(iziesanas_atbilde.status_code, 302)
+        self.assertIn("/ieeja?", iziesanas_atbilde.headers["Location"])
 
-    def test_user_can_save_plan_and_use_quick_add(self):
-        self._register_and_login()
+    def test_lietotajs_var_saglabat_planu_un_izmantot_atro_iemaksu(self):
+        self._registret_un_ieiet()
 
-        save_response = self.client.post(
-            "/dashboard",
+        saglabasanas_atbilde = self.klients.post(
+            "/panelis",
             data={
-                "goal_name": "Drošības spilvens",
-                "goal_amount": "1000",
-                "current_balance": "400",
-                "monthly_contribution": "125",
-                "target_date": "",
-                "note": "Trīs mēnešu izdevumiem.",
+                "merka_nosaukums": "Drošības spilvens",
+                "merka_summa": "1000",
+                "pasreizejais_atlikums": "400",
+                "ikmenesa_iemaksa": "125",
+                "merka_datums": "",
+                "piezime": "Trīs mēnešu izdevumiem.",
             },
         )
-        self.assertEqual(save_response.status_code, 302)
-        self.assertIn("/dashboard?", save_response.headers["Location"])
+        self.assertEqual(saglabasanas_atbilde.status_code, 302)
+        self.assertIn("/panelis?", saglabasanas_atbilde.headers["Location"])
 
-        data_response = self.client.get("/api/dashboard-data")
-        payload = data_response.get_json()
-        self.assertEqual(data_response.status_code, 200)
-        self.assertEqual(payload["goalName"], "Drošības spilvens")
-        self.assertEqual(payload["progressPercentage"], 40.0)
-        self.assertEqual(payload["note"], "Trīs mēnešu izdevumiem.")
-        self.assertEqual(payload["statusLabel"], "Brīvāks temps")
+        datu_atbilde = self.klients.get("/api/panela-dati")
+        saturs = datu_atbilde.get_json()
+        self.assertEqual(datu_atbilde.status_code, 200)
+        self.assertEqual(saturs["merkaNosaukums"], "Drošības spilvens")
+        self.assertEqual(saturs["progresaProcenti"], 40.0)
+        self.assertEqual(saturs["piezime"], "Trīs mēnešu izdevumiem.")
+        self.assertEqual(saturs["statusaUzraksts"], "Brīvāks temps")
 
-        quick_add_response = self.client.post("/dashboard/quick-add", data={"amount": "25"})
-        self.assertEqual(quick_add_response.status_code, 302)
-        self.assertIn("/dashboard?", quick_add_response.headers["Location"])
+        atras_iemaksas_atbilde = self.klients.post("/panelis/atra-iemaksa", data={"summa": "25"})
+        self.assertEqual(atras_iemaksas_atbilde.status_code, 302)
+        self.assertIn("/panelis?", atras_iemaksas_atbilde.headers["Location"])
 
-        updated_data_response = self.client.get("/api/dashboard-data")
-        updated_payload = updated_data_response.get_json()
-        self.assertEqual(updated_payload["currentBalance"], 425.0)
-        self.assertEqual(updated_payload["progressPercentage"], 42.5)
+        atjaunoto_datu_atbilde = self.klients.get("/api/panela-dati")
+        atjaunotais_saturs = atjaunoto_datu_atbilde.get_json()
+        self.assertEqual(atjaunotais_saturs["pasreizejaisAtlikums"], 425.0)
+        self.assertEqual(atjaunotais_saturs["progresaProcenti"], 42.5)
 
-        connection = sqlite3.connect(self.database_path)
-        row = connection.execute(
+        savienojums = sqlite3.connect(self.datubazes_cels)
+        rinda = savienojums.execute(
             """
-            SELECT goal_name, current_balance, monthly_contribution
-            FROM savings_profiles
+            SELECT merka_nosaukums, pasreizejais_atlikums, ikmenesa_iemaksa
+            FROM krajsanas_plani
             """
         ).fetchone()
-        connection.close()
+        savienojums.close()
 
-        self.assertEqual(row[0], "Drošības spilvens")
-        self.assertEqual(row[1], 425.0)
-        self.assertEqual(row[2], 125.0)
+        self.assertEqual(rinda[0], "Drošības spilvens")
+        self.assertEqual(rinda[1], 425.0)
+        self.assertEqual(rinda[2], 125.0)
 
-    def test_rendered_dashboard_contains_no_raw_jinja_tokens(self):
-        self._register_and_login()
+    def test_attelotaja_paneli_nav_neapstradatu_jinja_tekstu(self):
+        self._registret_un_ieiet()
 
-        response = self.client.get("/dashboard")
-        html = response.get_data(as_text=True)
+        atbilde = self.klients.get("/panelis")
+        html = atbilde.get_data(as_text=True)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(atbilde.status_code, 200)
         self.assertNotIn("{{", html)
         self.assertNotIn("{%", html)
         self.assertIn("../static/style.css", html)
         self.assertIn("../static/dashboard.js", html)
 
-    def test_dashboard_uses_empty_placeholders_by_default(self):
-        self._register_and_login()
+    def test_panelis_pec_noklusejuma_izmanto_tuksus_vietturus(self):
+        self._registret_un_ieiet()
 
-        response = self.client.get("/dashboard")
-        html = response.get_data(as_text=True)
+        atbilde = self.klients.get("/panelis")
+        html = atbilde.get_data(as_text=True)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(atbilde.status_code, 200)
         self.assertIn('placeholder="Tavs mērķa nosaukums"', html)
         self.assertIn('placeholder="Tava gala summa"', html)
         self.assertIn('placeholder="Tavs pašreizējais atlikums"', html)
@@ -136,31 +136,31 @@ class GoalBloomTests(unittest.TestCase):
         self.assertNotIn("Drošības spilvens", html)
         self.assertNotIn('placeholder="5000"', html)
 
-    def test_preview_dashboard_data_stays_empty(self):
-        script_path = Path(__file__).resolve().parent.parent / "static" / "dashboard.js"
-        script = script_path.read_text(encoding="utf-8")
+    def test_prieksskata_panela_dati_paliek_tuksi(self):
+        skripta_cels = Path(__file__).resolve().parent.parent / "static" / "dashboard.js"
+        skripts = skripta_cels.read_text(encoding="utf-8")
 
-        self.assertIn("const PREVIEW_DATA = {", script)
-        self.assertIn('hasSavedPlan: false', script)
-        self.assertIn('goalName: ""', script)
-        self.assertIn('goalAmount: ""', script)
-        self.assertIn('statusLabel: "Gaida ievadi"', script)
-        self.assertNotIn("Ceļojums uz Itāliju", script)
+        self.assertIn("const PREVIEW_DATA = {", skripts)
+        self.assertIn("irSaglabatsPlans: false", skripts)
+        self.assertIn('merkaNosaukums: ""', skripts)
+        self.assertIn('merkaSumma: ""', skripts)
+        self.assertIn('statusaUzraksts: "Gaida ievadi"', skripts)
+        self.assertNotIn("Ceļojums uz Itāliju", skripts)
 
-    def _register_and_login(self):
-        self.client.post(
-            "/register",
+    def _registret_un_ieiet(self):
+        self.klients.post(
+            "/registracija",
             data={
-                "username": "demo_user",
-                "password": "secret123",
-                "confirm_password": "secret123",
+                "lietotajvards": "demo_user",
+                "parole": "secret123",
+                "paroles_apstiprinajums": "secret123",
             },
         )
-        self.client.post(
-            "/login",
+        self.klients.post(
+            "/ieeja",
             data={
-                "username": "demo_user",
-                "password": "secret123",
+                "lietotajvards": "demo_user",
+                "parole": "secret123",
             },
         )
 

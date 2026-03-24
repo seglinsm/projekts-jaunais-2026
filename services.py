@@ -7,368 +7,383 @@ import re
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-MILESTONES = (25, 50, 75, 100)
-QUICK_AMOUNTS = (10, 25, 50)
+PROGRESA_POSMI = (25, 50, 75, 100)
+ATRAS_IEMAKSAS_SUMMAS = (10, 25, 50)
 
 
-def _format_currency(value):
-    amount = float(value or 0)
-    whole, fraction = f"{amount:,.2f}".split(".")
-    return f"{whole.replace(',', ' ')},{fraction} €"
+def _formatet_valutu(vertiba):
+    summa = float(vertiba or 0)
+    veselie, dalas = f"{summa:,.2f}".split(".")
+    return f"{veselie.replace(',', ' ')},{dalas} €"
 
 
-class ValidationError(ValueError):
+class ValidacijasKluda(ValueError):
     pass
 
 
-class AuthenticationError(ValueError):
+class AutentifikacijasKluda(ValueError):
     pass
 
 
-def register_user(connection, payload):
-    username = _require_username(payload.get("username"))
-    password = _require_password(
-        payload.get("password"),
-        payload.get("confirm_password") or payload.get("confirmPassword"),
+def registret_lietotaju(savienojums, dati):
+    lietotajvards = _pieprasit_lietotajvardu(dati.get("lietotajvards"))
+    parole = _pieprasit_paroli(
+        dati.get("parole"),
+        dati.get("paroles_apstiprinajums") or dati.get("parolesApstiprinajums"),
     )
 
-    existing = connection.execute(
-        "SELECT id FROM users WHERE username = ?",
-        (username,),
+    esosais = savienojums.execute(
+        "SELECT id FROM lietotaji WHERE lietotajvards = ?",
+        (lietotajvards,),
     ).fetchone()
-    if existing is not None:
-        raise ValidationError("Šis lietotājvārds jau ir aizņemts.")
+    if esosais is not None:
+        raise ValidacijasKluda("Šis lietotājvārds jau ir aizņemts.")
 
-    cursor = connection.execute(
+    kursors = savienojums.execute(
         """
-        INSERT INTO users (username, password_hash)
+        INSERT INTO lietotaji (lietotajvards, paroles_jaukums)
         VALUES (?, ?)
         """,
-        (username, generate_password_hash(password)),
+        (lietotajvards, generate_password_hash(parole)),
     )
-    connection.commit()
-    return get_user_by_id(connection, cursor.lastrowid)
+    savienojums.commit()
+    return iegut_lietotaju_pec_id(savienojums, kursors.lastrowid)
 
 
-def authenticate_user(connection, payload):
-    username = (payload.get("username") or "").strip()
-    password = payload.get("password") or ""
+def autentificet_lietotaju(savienojums, dati):
+    lietotajvards = (dati.get("lietotajvards") or "").strip()
+    parole = dati.get("parole") or ""
 
-    if not username or not password:
-        raise AuthenticationError("Ievadi gan lietotājvārdu, gan paroli.")
+    if not lietotajvards or not parole:
+        raise AutentifikacijasKluda("Ievadi gan lietotājvārdu, gan paroli.")
 
-    row = connection.execute(
+    rinda = savienojums.execute(
         """
-        SELECT id, username, password_hash, created_at
-        FROM users
-        WHERE username = ?
+        SELECT id, lietotajvards, paroles_jaukums, izveidots_laiks
+        FROM lietotaji
+        WHERE lietotajvards = ?
         """,
-        (username,),
+        (lietotajvards,),
     ).fetchone()
-    if row is None or not check_password_hash(row["password_hash"], password):
-        raise AuthenticationError("Nepareizs lietotājvārds vai parole.")
+    if rinda is None or not check_password_hash(rinda["paroles_jaukums"], parole):
+        raise AutentifikacijasKluda("Nepareizs lietotājvārds vai parole.")
 
-    return _serialize_user(row)
+    return _serializet_lietotaju(rinda)
 
 
-def get_user_by_id(connection, user_id):
-    row = connection.execute(
+def iegut_lietotaju_pec_id(savienojums, lietotaja_id):
+    rinda = savienojums.execute(
         """
-        SELECT id, username, created_at
-        FROM users
+        SELECT id, lietotajvards, izveidots_laiks
+        FROM lietotaji
         WHERE id = ?
         """,
-        (user_id,),
+        (lietotaja_id,),
     ).fetchone()
-    if row is None:
+    if rinda is None:
         return None
-    return _serialize_user(row)
+    return _serializet_lietotaju(rinda)
 
 
-def get_dashboard_data(connection, user_id):
-    row = _get_profile_row(connection, user_id)
-    return _build_dashboard_data(row)
+def iegut_panela_datus(savienojums, lietotaja_id):
+    rinda = _iegut_plana_rindu(savienojums, lietotaja_id)
+    return _uzbuvet_panela_datus(rinda)
 
 
-def save_profile(connection, user_id, payload):
-    goal_name = _require_goal_name(payload.get("goal_name"))
-    goal_amount = _require_amount(payload.get("goal_amount"), "mērķa summu", allow_zero=False)
-    current_balance = _require_amount(
-        payload.get("current_balance"),
+def saglabat_krajsanas_planu(savienojums, lietotaja_id, dati):
+    merka_nosaukums = _pieprasit_merka_nosaukumu(dati.get("merka_nosaukums"))
+    merka_summa = _pieprasit_summu(
+        dati.get("merka_summa"),
+        "mērķa summu",
+        "Mērķa summai",
+        atlaut_nulli=False,
+    )
+    pasreizejais_atlikums = _pieprasit_summu(
+        dati.get("pasreizejais_atlikums"),
         "pašreizējo atlikumu",
-        allow_zero=True,
+        "Pašreizējam atlikumam",
+        atlaut_nulli=True,
     )
-    monthly_contribution = _require_amount(
-        payload.get("monthly_contribution"),
+    ikmenesa_iemaksa = _pieprasit_summu(
+        dati.get("ikmenesa_iemaksa"),
         "ikmēneša iemaksu",
-        allow_zero=True,
+        "Ikmēneša iemaksai",
+        atlaut_nulli=True,
     )
-    target_date = _optional_date(payload.get("target_date"))
-    note = _clean_note(payload.get("note"))
+    merka_datums = _neobligats_datums(dati.get("merka_datums"))
+    piezime = _notirit_piezimi(dati.get("piezime"))
 
-    connection.execute(
+    savienojums.execute(
         """
-        INSERT INTO savings_profiles (
-            user_id,
-            goal_name,
-            goal_amount,
-            current_balance,
-            monthly_contribution,
-            target_date,
-            note
+        INSERT INTO krajsanas_plani (
+            lietotaja_id,
+            merka_nosaukums,
+            merka_summa,
+            pasreizejais_atlikums,
+            ikmenesa_iemaksa,
+            merka_datums,
+            piezime
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET
-            goal_name = excluded.goal_name,
-            goal_amount = excluded.goal_amount,
-            current_balance = excluded.current_balance,
-            monthly_contribution = excluded.monthly_contribution,
-            target_date = excluded.target_date,
-            note = excluded.note,
-            updated_at = CURRENT_TIMESTAMP
+        ON CONFLICT(lietotaja_id) DO UPDATE SET
+            merka_nosaukums = excluded.merka_nosaukums,
+            merka_summa = excluded.merka_summa,
+            pasreizejais_atlikums = excluded.pasreizejais_atlikums,
+            ikmenesa_iemaksa = excluded.ikmenesa_iemaksa,
+            merka_datums = excluded.merka_datums,
+            piezime = excluded.piezime,
+            atjauninats_laiks = CURRENT_TIMESTAMP
         """,
         (
-            user_id,
-            goal_name,
-            goal_amount,
-            current_balance,
-            monthly_contribution,
-            target_date,
-            note,
+            lietotaja_id,
+            merka_nosaukums,
+            merka_summa,
+            pasreizejais_atlikums,
+            ikmenesa_iemaksa,
+            merka_datums,
+            piezime,
         ),
     )
-    connection.commit()
-    return get_dashboard_data(connection, user_id)
+    savienojums.commit()
+    return iegut_panela_datus(savienojums, lietotaja_id)
 
 
-def add_quick_amount(connection, user_id, payload):
-    row = _get_profile_row(connection, user_id)
-    if row is None:
-        raise ValidationError("Vispirms saglabā mērķi, tad lieto ātro iemaksu.")
+def pievienot_atro_iemaksu(savienojums, lietotaja_id, dati):
+    rinda = _iegut_plana_rindu(savienojums, lietotaja_id)
+    if rinda is None:
+        raise ValidacijasKluda("Vispirms saglabā mērķi, tad lieto ātro iemaksu.")
 
-    amount = _require_amount(payload.get("amount"), "ātrās iemaksas summu", allow_zero=False)
-    new_balance = round(float(row["current_balance"]) + amount, 2)
-
-    connection.execute(
-        """
-        UPDATE savings_profiles
-        SET current_balance = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ?
-        """,
-        (new_balance, user_id),
+    summa = _pieprasit_summu(
+        dati.get("summa"),
+        "ātrās iemaksas summu",
+        "Ātrās iemaksas summai",
+        atlaut_nulli=False,
     )
-    connection.commit()
-    return get_dashboard_data(connection, user_id)
+    jaunais_atlikums = round(float(rinda["pasreizejais_atlikums"]) + summa, 2)
+
+    savienojums.execute(
+        """
+        UPDATE krajsanas_plani
+        SET pasreizejais_atlikums = ?, atjauninats_laiks = CURRENT_TIMESTAMP
+        WHERE lietotaja_id = ?
+        """,
+        (jaunais_atlikums, lietotaja_id),
+    )
+    savienojums.commit()
+    return iegut_panela_datus(savienojums, lietotaja_id)
 
 
-def _get_profile_row(connection, user_id):
-    return connection.execute(
+def _iegut_plana_rindu(savienojums, lietotaja_id):
+    return savienojums.execute(
         """
         SELECT
-            user_id,
-            goal_name,
-            goal_amount,
-            current_balance,
-            monthly_contribution,
-            target_date,
-            note,
-            updated_at
-        FROM savings_profiles
-        WHERE user_id = ?
+            lietotaja_id,
+            merka_nosaukums,
+            merka_summa,
+            pasreizejais_atlikums,
+            ikmenesa_iemaksa,
+            merka_datums,
+            piezime,
+            atjauninats_laiks
+        FROM krajsanas_plani
+        WHERE lietotaja_id = ?
         """,
-        (user_id,),
+        (lietotaja_id,),
     ).fetchone()
 
 
-def _build_dashboard_data(row):
-    today = date.today()
-    has_saved_plan = row is not None
-    goal_name = row["goal_name"] if row else ""
-    goal_amount = round(float(row["goal_amount"]), 2) if row else 0.0
-    current_balance = round(float(row["current_balance"]), 2) if row else 0.0
-    monthly_contribution = round(float(row["monthly_contribution"]), 2) if row else 0.0
-    target_date = row["target_date"] if row else ""
-    note = row["note"] if row else ""
-    updated_at = row["updated_at"] if row else None
+def _uzbuvet_panela_datus(rinda):
+    sodiena = date.today()
+    ir_saglabats_plans = rinda is not None
+    merka_nosaukums = rinda["merka_nosaukums"] if rinda else ""
+    merka_summa = round(float(rinda["merka_summa"]), 2) if rinda else 0.0
+    pasreizejais_atlikums = round(float(rinda["pasreizejais_atlikums"]), 2) if rinda else 0.0
+    ikmenesa_iemaksa = round(float(rinda["ikmenesa_iemaksa"]), 2) if rinda else 0.0
+    merka_datums = rinda["merka_datums"] if rinda else ""
+    piezime = rinda["piezime"] if rinda else ""
+    atjauninats_laiks = rinda["atjauninats_laiks"] if rinda else None
 
-    if goal_amount <= 0:
+    if merka_summa <= 0:
         return {
-            "hasSavedPlan": False,
-            "goalName": goal_name,
-            "goalAmount": goal_amount,
-            "currentBalance": current_balance,
-            "monthlyContribution": monthly_contribution,
-            "targetDate": target_date,
-            "note": note,
-            "remainingAmount": 0.0,
-            "progressPercentage": 0.0,
-            "visualProgressPercentage": 0.0,
-            "requiredMonthlyAmount": None,
-            "statusLabel": "Gaida ievadi",
-            "statusTone": "calm",
-            "forecastText": "Ievadi mērķi un pašreizējo atlikumu, lai redzētu progresu.",
-            "timelineText": "Ikmēneša iemaksa palīdz saprast, kad vari tikt līdz mērķim.",
-            "nextMilestoneText": "Pirmais progresa posms parādīsies pēc plāna saglabāšanas.",
-            "daysUntilTarget": None,
-            "milestones": _build_milestones(0.0),
-            "quickAmounts": QUICK_AMOUNTS,
-            "updatedAt": updated_at,
+            "irSaglabatsPlans": False,
+            "merkaNosaukums": merka_nosaukums,
+            "merkaSumma": merka_summa,
+            "pasreizejaisAtlikums": pasreizejais_atlikums,
+            "ikmenesaIemaksa": ikmenesa_iemaksa,
+            "merkaDatums": merka_datums,
+            "piezime": piezime,
+            "atlikusiSumma": 0.0,
+            "progresaProcenti": 0.0,
+            "redzamieProgresaProcenti": 0.0,
+            "nepieciesamaIkmenesaIemaksa": None,
+            "statusaUzraksts": "Gaida ievadi",
+            "statusaTonis": "mierigs",
+            "prognozesTeksts": "Ievadi mērķi un pašreizējo atlikumu, lai redzētu progresu.",
+            "terminaTeksts": "Ikmēneša iemaksa palīdz saprast, kad vari tikt līdz mērķim.",
+            "nakamaPosmaTeksts": "Pirmais progresa posms parādīsies pēc plāna saglabāšanas.",
+            "dienasLidzMerkim": None,
+            "progresaPosmi": _uzbuvet_progresa_posmus(0.0),
+            "atrasIemaksasSummas": ATRAS_IEMAKSAS_SUMMAS,
+            "atjauninatsLaiks": atjauninats_laiks,
         }
 
-    remaining_amount = round(max(goal_amount - current_balance, 0), 2)
-    raw_progress = round((current_balance / goal_amount) * 100, 1)
-    visual_progress = min(raw_progress, 100.0)
-    required_monthly = None
-    days_until_target = None
-    status_label = "Brīvāks temps"
-    status_tone = "calm"
-    timeline_text = "Pievieno mērķa datumu, lai redzētu, vai tavs mēneša plāns ir pietiekams."
+    atlikusi_summa = round(max(merka_summa - pasreizejais_atlikums, 0), 2)
+    progresa_procenti = round((pasreizejais_atlikums / merka_summa) * 100, 1)
+    redzamie_progresa_procenti = min(progresa_procenti, 100.0)
+    nepieciesama_ikmenesa_iemaksa = None
+    dienas_lidz_merkim = None
+    statusa_uzraksts = "Brīvāks temps"
+    statusa_tonis = "mierigs"
+    termina_teksts = "Pievieno mērķa datumu, lai redzētu, vai tavs mēneša plāns ir pietiekams."
 
-    if remaining_amount <= 0:
-        forecast_text = "Tu šo mērķi jau esi sasniedzis."
-        status_label = "Mērķis sasniegts"
-        status_tone = "good"
-        timeline_text = "Viss pēc šī punkta jau ir ekstra rezerve."
-    elif monthly_contribution > 0:
-        months_to_goal = max(math.ceil(remaining_amount / monthly_contribution), 1)
-        month_label = "mēnesi" if months_to_goal == 1 else "mēnešus"
-        forecast_text = f"Ar pašreizējo tempu tev vajadzēs vēl apmēram {months_to_goal} {month_label}."
+    if atlikusi_summa <= 0:
+        prognozes_teksts = "Tu šo mērķi jau esi sasniedzis."
+        statusa_uzraksts = "Mērķis sasniegts"
+        statusa_tonis = "labs"
+        termina_teksts = "Viss pēc šī punkta jau ir ekstra rezerve."
+    elif ikmenesa_iemaksa > 0:
+        menesi_lidz_merkim = max(math.ceil(atlikusi_summa / ikmenesa_iemaksa), 1)
+        menesa_vards = "mēnesi" if menesi_lidz_merkim == 1 else "mēnešus"
+        prognozes_teksts = f"Ar pašreizējo tempu tev vajadzēs vēl apmēram {menesi_lidz_merkim} {menesa_vards}."
     else:
-        forecast_text = "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku."
+        prognozes_teksts = "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku."
 
-    if target_date:
-        target = date.fromisoformat(target_date)
-        days_until_target = (target - today).days
+    if merka_datums:
+        merka_datuma_vertiba = date.fromisoformat(merka_datums)
+        dienas_lidz_merkim = (merka_datuma_vertiba - sodiena).days
 
-        if remaining_amount <= 0:
-            status_label = "Mērķis sasniegts"
-            status_tone = "good"
-            required_monthly = 0.0
-            timeline_text = "Mērķa datums tev vairs nav šķērslis. Smuki."
-        elif days_until_target < 0:
-            status_label = "Datums ir garām"
-            status_tone = "alert"
-            timeline_text = "Tavs mērķa datums jau ir pagājis. Pabīdi to vai palielini krāšanas tempu."
+        if atlikusi_summa <= 0:
+            statusa_uzraksts = "Mērķis sasniegts"
+            statusa_tonis = "labs"
+            nepieciesama_ikmenesa_iemaksa = 0.0
+            termina_teksts = "Mērķa datums tev vairs nav šķērslis. Smuki."
+        elif dienas_lidz_merkim < 0:
+            statusa_uzraksts = "Datums ir garām"
+            statusa_tonis = "trauksme"
+            termina_teksts = "Tavs mērķa datums jau ir pagājis. Pabīdi to vai palielini krāšanas tempu."
         else:
-            months_until_target = max(days_until_target / 30.44, 0.1)
-            required_monthly = round(remaining_amount / months_until_target, 2)
-            timeline_text = f"Lai paspētu līdz datumam, tev vajag apmēram {_format_currency(required_monthly)} mēnesī."
-            if monthly_contribution <= 0:
-                status_label = "Nav mēneša plāna"
-                status_tone = "warning"
-            elif monthly_contribution + 0.009 >= required_monthly:
-                status_label = "Viss iet labi"
-                status_tone = "good"
+            menesi_lidz_merka_datumam = max(dienas_lidz_merkim / 30.44, 0.1)
+            nepieciesama_ikmenesa_iemaksa = round(atlikusi_summa / menesi_lidz_merka_datumam, 2)
+            termina_teksts = (
+                "Lai paspētu līdz datumam, tev vajag apmēram "
+                f"{_formatet_valutu(nepieciesama_ikmenesa_iemaksa)} mēnesī."
+            )
+            if ikmenesa_iemaksa <= 0:
+                statusa_uzraksts = "Nav mēneša plāna"
+                statusa_tonis = "bridinajums"
+            elif ikmenesa_iemaksa + 0.009 >= nepieciesama_ikmenesa_iemaksa:
+                statusa_uzraksts = "Viss iet labi"
+                statusa_tonis = "labs"
             else:
-                status_label = "Jāpiespiež vairāk"
-                status_tone = "warning"
+                statusa_uzraksts = "Jāpiespiež vairāk"
+                statusa_tonis = "bridinajums"
 
-    next_milestone = next((value for value in MILESTONES if raw_progress < value), None)
-    if next_milestone is None:
-        next_milestone_text = "Visi progresa posmi ir sasniegti."
+    nakamais_posms = next((vertiba for vertiba in PROGRESA_POSMI if progresa_procenti < vertiba), None)
+    if nakamais_posms is None:
+        nakama_posma_teksts = "Visi progresa posmi ir sasniegti."
     else:
-        next_milestone_text = f"Nākamais posms ir {next_milestone}%."
+        nakama_posma_teksts = f"Nākamais posms ir {nakamais_posms}%."
 
     return {
-        "hasSavedPlan": has_saved_plan,
-        "goalName": goal_name,
-        "goalAmount": goal_amount,
-        "currentBalance": current_balance,
-        "monthlyContribution": monthly_contribution,
-        "targetDate": target_date,
-        "note": note,
-        "remainingAmount": remaining_amount,
-        "progressPercentage": raw_progress,
-        "visualProgressPercentage": visual_progress,
-        "requiredMonthlyAmount": required_monthly,
-        "statusLabel": status_label,
-        "statusTone": status_tone,
-        "forecastText": forecast_text,
-        "timelineText": timeline_text,
-        "nextMilestoneText": next_milestone_text,
-        "daysUntilTarget": days_until_target,
-        "milestones": _build_milestones(raw_progress),
-        "quickAmounts": QUICK_AMOUNTS,
-        "updatedAt": updated_at,
+        "irSaglabatsPlans": ir_saglabats_plans,
+        "merkaNosaukums": merka_nosaukums,
+        "merkaSumma": merka_summa,
+        "pasreizejaisAtlikums": pasreizejais_atlikums,
+        "ikmenesaIemaksa": ikmenesa_iemaksa,
+        "merkaDatums": merka_datums,
+        "piezime": piezime,
+        "atlikusiSumma": atlikusi_summa,
+        "progresaProcenti": progresa_procenti,
+        "redzamieProgresaProcenti": redzamie_progresa_procenti,
+        "nepieciesamaIkmenesaIemaksa": nepieciesama_ikmenesa_iemaksa,
+        "statusaUzraksts": statusa_uzraksts,
+        "statusaTonis": statusa_tonis,
+        "prognozesTeksts": prognozes_teksts,
+        "terminaTeksts": termina_teksts,
+        "nakamaPosmaTeksts": nakama_posma_teksts,
+        "dienasLidzMerkim": dienas_lidz_merkim,
+        "progresaPosmi": _uzbuvet_progresa_posmus(progresa_procenti),
+        "atrasIemaksasSummas": ATRAS_IEMAKSAS_SUMMAS,
+        "atjauninatsLaiks": atjauninats_laiks,
     }
 
 
-def _build_milestones(progress):
+def _uzbuvet_progresa_posmus(progresa_procenti):
     return [
         {
-            "label": f"{value}%",
-            "reached": progress >= value,
+            "etikete": f"{vertiba}%",
+            "sasniegts": progresa_procenti >= vertiba,
         }
-        for value in MILESTONES
+        for vertiba in PROGRESA_POSMI
     ]
 
 
-def _serialize_user(row):
+def _serializet_lietotaju(rinda):
     return {
-        "id": row["id"],
-        "username": row["username"],
-        "createdAt": row["created_at"],
+        "id": rinda["id"],
+        "lietotajvards": rinda["lietotajvards"],
+        "izveidotsLaiks": rinda["izveidots_laiks"],
     }
 
 
-def _require_username(value):
-    username = (value or "").strip()
-    if len(username) < 3:
-        raise ValidationError("Lietotājvārdam jābūt vismaz 3 simbolus garam.")
-    if len(username) > 24:
-        raise ValidationError("Lietotājvārdam jābūt ne garākam par 24 simboliem.")
-    if re.fullmatch(r"[A-Za-z0-9_]+", username) is None:
-        raise ValidationError("Lietotājvārdā drīkst lietot tikai burtus, ciparus un apakšsvītru.")
-    return username
+def _pieprasit_lietotajvardu(vertiba):
+    lietotajvards = (vertiba or "").strip()
+    if len(lietotajvards) < 3:
+        raise ValidacijasKluda("Lietotājvārdam jābūt vismaz 3 simbolus garam.")
+    if len(lietotajvards) > 24:
+        raise ValidacijasKluda("Lietotājvārdam jābūt ne garākam par 24 simboliem.")
+    if re.fullmatch(r"[A-Za-z0-9_]+", lietotajvards) is None:
+        raise ValidacijasKluda("Lietotājvārdā drīkst lietot tikai burtus, ciparus un apakšsvītru.")
+    return lietotajvards
 
 
-def _require_password(password, confirmation):
-    value = password or ""
-    if len(value) < 6:
-        raise ValidationError("Parolei jābūt vismaz 6 simbolus garai.")
-    if confirmation != value:
-        raise ValidationError("Paroles nesakrīt.")
-    return value
+def _pieprasit_paroli(parole, apstiprinajums):
+    vertiba = parole or ""
+    if len(vertiba) < 6:
+        raise ValidacijasKluda("Parolei jābūt vismaz 6 simbolus garai.")
+    if apstiprinajums != vertiba:
+        raise ValidacijasKluda("Paroles nesakrīt.")
+    return vertiba
 
 
-def _require_goal_name(value):
-    goal_name = (value or "").strip()
-    if not goal_name:
-        raise ValidationError("Mērķa nosaukums ir obligāts.")
-    if len(goal_name) > 60:
-        raise ValidationError("Mērķa nosaukumam jābūt īsākam par 60 simboliem.")
-    return goal_name
+def _pieprasit_merka_nosaukumu(vertiba):
+    merka_nosaukums = (vertiba or "").strip()
+    if not merka_nosaukums:
+        raise ValidacijasKluda("Mērķa nosaukums ir obligāts.")
+    if len(merka_nosaukums) > 60:
+        raise ValidacijasKluda("Mērķa nosaukumam jābūt īsākam par 60 simboliem.")
+    return merka_nosaukums
 
 
-def _require_amount(value, label, allow_zero):
-    raw_value = "" if value is None else str(value).strip()
-    if raw_value == "":
-        raise ValidationError(f"Ievadi {label}.")
+def _pieprasit_summu(vertiba, ievades_nosaukums, lauka_nosaukums, atlaut_nulli):
+    neapstradata_vertiba = "" if vertiba is None else str(vertiba).strip()
+    if neapstradata_vertiba == "":
+        raise ValidacijasKluda(f"Ievadi {ievades_nosaukums}.")
 
     try:
-        amount = round(float(raw_value), 2)
-    except ValueError as error:
-        raise ValidationError(f"Ievadi korektu {label}.") from error
+        summa = round(float(neapstradata_vertiba), 2)
+    except ValueError as kluda:
+        raise ValidacijasKluda(f"Ievadi korektu {ievades_nosaukums}.") from kluda
 
-    minimum = 0.0 if allow_zero else 0.01
-    if amount < minimum or (not allow_zero and amount == 0):
-        comparator = "0 vai lielākai" if allow_zero else "lielākai par 0"
-        raise ValidationError(f"{label[:1].upper() + label[1:]} jābūt {comparator}.")
-    return amount
+    mazaka_atlauta_vertiba = 0.0 if atlaut_nulli else 0.01
+    if summa < mazaka_atlauta_vertiba or (not atlaut_nulli and summa == 0):
+        salidzinajums = "0 vai lielākai" if atlaut_nulli else "lielākai par 0"
+        raise ValidacijasKluda(f"{lauka_nosaukums} jābūt {salidzinajums}.")
+    return summa
 
 
-def _optional_date(value):
-    raw_value = (value or "").strip()
-    if not raw_value:
+def _neobligats_datums(vertiba):
+    neapstradata_vertiba = (vertiba or "").strip()
+    if not neapstradata_vertiba:
         return None
 
     try:
-        date.fromisoformat(raw_value)
-    except ValueError as error:
-        raise ValidationError("Ievadi korektu mērķa datumu.") from error
-    return raw_value
+        date.fromisoformat(neapstradata_vertiba)
+    except ValueError as kluda:
+        raise ValidacijasKluda("Ievadi korektu mērķa datumu.") from kluda
+    return neapstradata_vertiba
 
 
-def _clean_note(value):
-    note = (value or "").strip()
-    return note[:240]
+def _notirit_piezimi(vertiba):
+    piezime = (vertiba or "").strip()
+    return piezime[:240]

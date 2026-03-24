@@ -12,7 +12,7 @@
 
     <div class="page-shell">
         <header class="site-header">
-            <a class="brand" href="/login">
+            <a class="brand" href="/ieeja">
                 <span class="brand-mark">GB</span>
                 <span>
                     <strong>GoalBloom</strong>
@@ -21,12 +21,12 @@
             </a>
 
             <nav class="top-nav">
-                <a class="nav-link" href="/login">Ieeja</a>
-                <a class="nav-button" href="/register">Reģistrēties</a>
+                <a class="nav-link" href="/ieeja">Ieeja</a>
+                <a class="nav-button" href="/registracija">Reģistrēties</a>
             </nav>
         </header>
 
-        <section id="noticeBanner" class="flash-stack" hidden></section>
+        <section id="pazinojumuJosla" class="flash-stack" hidden></section>
 
         <section class="auth-layout">
             <article class="auth-copy">
@@ -59,25 +59,25 @@
                 <p class="eyebrow">Jauns konts</p>
                 <h2>Reģistrēties</h2>
 
-                <form class="auth-form" action="/register" method="post">
+                <form class="auth-form" action="/registracija" method="post">
                     <label>
                         Lietotājvārds
-                        <input type="text" name="username" maxlength="24" placeholder="mans_vards" required>
+                        <input type="text" name="lietotajvards" maxlength="24" placeholder="mans_vards" required>
                     </label>
                     <label>
                         Parole
-                        <input type="password" name="password" placeholder="Vismaz 6 simboli" required>
+                        <input type="password" name="parole" placeholder="Vismaz 6 simboli" required>
                     </label>
                     <label>
                         Atkārto paroli
-                        <input type="password" name="confirm_password" placeholder="Ievadi paroli vēlreiz" required>
+                        <input type="password" name="paroles_apstiprinajums" placeholder="Ievadi paroli vēlreiz" required>
                     </label>
                     <button type="submit" class="primary-button">Izveidot kontu</button>
                 </form>
 
                 <footer>
                     Jau esi reģistrējies?
-                    <a class="inline-link" href="/login">Ej uz ieeju</a>
+                    <a class="inline-link" href="/ieeja">Ej uz ieeju</a>
                 </footer>
             </article>
         </section>

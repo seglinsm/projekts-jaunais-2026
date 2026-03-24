@@ -13,29 +13,29 @@
     }
 
     function renderNotice() {
-        const container = document.getElementById("noticeBanner");
+        const container = document.getElementById("pazinojumuJosla");
         if (!container) {
             return;
         }
 
         const params = getParams();
-        const notice = params.get("notice");
-        if (!notice) {
+        const pazinojums = params.get("pazinojums");
+        if (!pazinojums) {
             return;
         }
 
-        const level = params.get("notice_level") === "error" ? "error" : "success";
+        const level = params.get("pazinojuma_limenis") === "error" ? "error" : "success";
         container.hidden = false;
-        container.innerHTML = `<div class="flash flash-${level}">${escapeHtml(notice)}</div>`;
+        container.innerHTML = `<div class="flash flash-${level}">${escapeHtml(pazinojums)}</div>`;
     }
 
     function prefillUsername() {
-        const usernameInput = document.getElementById("usernameInput");
+        const usernameInput = document.getElementById("lietotajvardaIevade");
         if (!usernameInput) {
             return;
         }
 
-        const username = getParams().get("username");
+        const username = getParams().get("lietotajvards");
         if (username) {
             usernameInput.value = username;
         }

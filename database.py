@@ -4,36 +4,93 @@ import sqlite3
 from flask import current_app, g
 
 
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DATABASE = BASE_DIR / "goalbloom.db"
-SCHEMA_PATH = BASE_DIR / "schema.sql"
+PAMATMAPE = Path(__file__).resolve().parent
+NOKLUSETA_DATUBAZE = PAMATMAPE / "goalbloom.db"
+SHEMAS_CELS = PAMATMAPE / "schema.sql"
 
 
-def get_db():
+def iegut_datubazi():
     if "db" not in g:
-        connection = sqlite3.connect(current_app.config["DATABASE"])
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA foreign_keys = ON")
-        g.db = connection
+        savienojums = sqlite3.connect(current_app.config["DATABASE"])
+        savienojums.row_factory = sqlite3.Row
+        savienojums.execute("PRAGMA foreign_keys = ON")
+        g.db = savienojums
     return g.db
 
 
-def close_db(_error=None):
-    connection = g.pop("db", None)
-    if connection is not None:
-        connection.close()
+def aizvert_datubazi(_kluda=None):
+    savienojums = g.pop("db", None)
+    if savienojums is not None:
+        savienojums.close()
 
 
-def init_db(database_path=None):
-    db_path = Path(database_path or DEFAULT_DATABASE)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+def inicializet_datubazi(datubazes_cels=None):
+    datubazes_cels = Path(datubazes_cels or NOKLUSETA_DATUBAZE)
+    datubazes_cels.parent.mkdir(parents=True, exist_ok=True)
 
-    connection = sqlite3.connect(db_path)
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-    connection.commit()
-    connection.close()
+    savienojums = sqlite3.connect(datubazes_cels)
+    savienojums.execute("PRAGMA foreign_keys = ON")
+    savienojums.executescript(SHEMAS_CELS.read_text(encoding="utf-8"))
+    _parnest_veco_shemu_uz_latviesu_valodu(savienojums)
+    savienojums.commit()
+    savienojums.close()
 
 
-def init_app(app):
-    app.teardown_appcontext(close_db)
+def inicializet_lietotni(lietotne):
+    lietotne.teardown_appcontext(aizvert_datubazi)
+
+
+def _parnest_veco_shemu_uz_latviesu_valodu(savienojums):
+    tabulas = {
+        rinda[0]
+        for rinda in savienojums.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+            """
+        ).fetchall()
+    }
+
+    if "users" in tabulas:
+        savienojums.execute(
+            """
+            INSERT OR IGNORE INTO lietotaji (id, lietotajvards, paroles_jaukums, izveidots_laiks)
+            SELECT id, username, password_hash, created_at
+            FROM users
+            """
+        )
+
+    if "savings_profiles" in tabulas:
+        savienojums.execute(
+            """
+            INSERT OR IGNORE INTO krajsanas_plani (
+                id,
+                lietotaja_id,
+                merka_nosaukums,
+                merka_summa,
+                pasreizejais_atlikums,
+                ikmenesa_iemaksa,
+                merka_datums,
+                piezime,
+                atjauninats_laiks
+            )
+            SELECT
+                id,
+                user_id,
+                goal_name,
+                goal_amount,
+                current_balance,
+                monthly_contribution,
+                target_date,
+                note,
+                updated_at
+            FROM savings_profiles
+            """
+        )
+
+    if "savings_profiles" in tabulas:
+        savienojums.execute("DROP TABLE savings_profiles")
+
+    if "users" in tabulas:
+        savienojums.execute("DROP TABLE users")
