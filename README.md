@@ -4,7 +4,6 @@
 1) git clone https://github.com/seglinsm/projekts-jaunais-2026.git
 
 
-
 2)python -m venv .venv
 
 
