@@ -252,5 +252,52 @@
         }
     }
 
-    document.addEventListener("DOMContentLoaded", loadDashboardData);
+    async function convertCurrency() {
+        const select = document.getElementById("currencySelect");
+        const result = document.getElementById("currencyResult");
+        if (!select || !result) {
+            return;
+        }
+
+        result.textContent = "Rēķinu...";
+
+        const balanceElement = document.getElementById("currentBalanceValue");
+        const rawBalance = balanceElement ? balanceElement.textContent : "0";
+        const numericBalance = Number(String(rawBalance).replace(/[^0-9.,-]/g, "").replace(",", "."));
+        const amount = Number.isFinite(numericBalance) ? numericBalance : 0;
+
+        const url = new URL("/api/valuta", window.location.origin);
+        url.searchParams.set("no", "EUR");
+        url.searchParams.set("uz", select.value);
+        url.searchParams.set("summa", String(amount));
+
+        try {
+            const response = await fetch(url.toString(), { credentials: "same-origin" });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                result.textContent = errorData.pazinojums || "Neizdevās iegūt kursu.";
+                return;
+            }
+            const data = await response.json();
+            const formatted = Number(data.konvertets).toLocaleString("lv-LV", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+            result.textContent = `${formatCurrency(amount)} ≈ ${formatted} ${data.uz}`;
+        } catch (_kluda) {
+            result.textContent = "Neizdevās sazināties ar valūtas pakalpojumu.";
+        }
+    }
+
+    function attachCurrencyHandler() {
+        const button = document.getElementById("currencyConvertButton");
+        if (button) {
+            button.addEventListener("click", convertCurrency);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDashboardData();
+        attachCurrencyHandler();
+    });
 })();
