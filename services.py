@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
-import math
 import re
 
 from werkzeug.security import check_password_hash, generate_password_hash
+
+from models import izveidot_planu
 
 
 PROGRESA_POSMI = (25, 50, 75, 100)
@@ -227,57 +228,38 @@ def _uzbuvet_panela_datus(rinda):
             "atjauninatsLaiks": atjauninats_laiks,
         }
 
-    atlikusi_summa = round(max(merka_summa - pasreizejais_atlikums, 0), 2)
-    progresa_procenti = round((pasreizejais_atlikums / merka_summa) * 100, 1)
-    redzamie_progresa_procenti = min(progresa_procenti, 100.0)
-    nepieciesama_ikmenesa_iemaksa = None
-    dienas_lidz_merkim = None
-    statusa_uzraksts = "Brīvāks temps"
-    statusa_tonis = "mierigs"
-    termina_teksts = "Pievieno mērķa datumu, lai redzētu, vai tavs mēneša plāns ir pietiekams."
+    plans = izveidot_planu(
+        merka_nosaukums=merka_nosaukums,
+        merka_summa=merka_summa,
+        pasreizejais_atlikums=pasreizejais_atlikums,
+        ikmenesa_iemaksa=ikmenesa_iemaksa,
+        merka_datums=merka_datums or None,
+        piezime=piezime,
+    )
 
-    if atlikusi_summa <= 0:
-        prognozes_teksts = "Tu šo mērķi jau esi sasniedzis."
-        statusa_uzraksts = "Mērķis sasniegts"
-        statusa_tonis = "labs"
-        termina_teksts = "Viss pēc šī punkta jau ir ekstra rezerve."
-    elif ikmenesa_iemaksa > 0:
-        menesi_lidz_merkim = max(math.ceil(atlikusi_summa / ikmenesa_iemaksa), 1)
-        menesa_vards = "mēnesi" if menesi_lidz_merkim == 1 else "mēnešus"
-        prognozes_teksts = f"Ar pašreizējo tempu tev vajadzēs vēl apmēram {menesi_lidz_merkim} {menesa_vards}."
-    else:
-        prognozes_teksts = "Pievieno ikmēneša iemaksu, lai redzētu aptuveno finiša laiku."
+    ir_termines = merka_datums is not None and merka_datums != ""
+    statusa_uzraksts = plans.statusa_uzraksts(sodiena) if ir_termines else plans.statusa_uzraksts()
+    statusa_tonis = plans.statusa_tonis(sodiena) if ir_termines else plans.statusa_tonis()
+    prognozes_teksts = plans.prognozes_teksts()
+    dienas_lidz_merkim = plans.dienas_lidz_merkim(sodiena) if ir_termines else None
+    nepieciesama_ikmenesa_iemaksa = (
+        plans.nepieciesama_ikmenesa_iemaksa(sodiena) if ir_termines else None
+    )
 
-    if merka_datums:
-        merka_datuma_vertiba = date.fromisoformat(merka_datums)
-        dienas_lidz_merkim = (merka_datuma_vertiba - sodiena).days
-
-        if atlikusi_summa <= 0:
-            statusa_uzraksts = "Mērķis sasniegts"
-            statusa_tonis = "labs"
-            nepieciesama_ikmenesa_iemaksa = 0.0
+    if ir_termines:
+        if plans.ir_sasniegts:
             termina_teksts = "Mērķa datums tev vairs nav šķērslis. Smuki."
         elif dienas_lidz_merkim < 0:
-            statusa_uzraksts = "Datums ir garām"
-            statusa_tonis = "trauksme"
             termina_teksts = "Tavs mērķa datums jau ir pagājis. Pabīdi to vai palielini krāšanas tempu."
         else:
-            menesi_lidz_merka_datumam = max(dienas_lidz_merkim / 30.44, 0.1)
-            nepieciesama_ikmenesa_iemaksa = round(atlikusi_summa / menesi_lidz_merka_datumam, 2)
             termina_teksts = (
                 "Lai paspētu līdz datumam, tev vajag apmēram "
                 f"{_formatet_valutu(nepieciesama_ikmenesa_iemaksa)} mēnesī."
             )
-            if ikmenesa_iemaksa <= 0:
-                statusa_uzraksts = "Nav mēneša plāna"
-                statusa_tonis = "bridinajums"
-            elif ikmenesa_iemaksa + 0.009 >= nepieciesama_ikmenesa_iemaksa:
-                statusa_uzraksts = "Viss iet labi"
-                statusa_tonis = "labs"
-            else:
-                statusa_uzraksts = "Jāpiespiež vairāk"
-                statusa_tonis = "bridinajums"
+    else:
+        termina_teksts = plans.termina_teksts()
 
+    progresa_procenti = plans.progresa_procenti
     nakamais_posms = next((vertiba for vertiba in PROGRESA_POSMI if progresa_procenti < vertiba), None)
     if nakamais_posms is None:
         nakama_posma_teksts = "Visi progresa posmi ir sasniegti."
@@ -292,9 +274,9 @@ def _uzbuvet_panela_datus(rinda):
         "ikmenesaIemaksa": ikmenesa_iemaksa,
         "merkaDatums": merka_datums,
         "piezime": piezime,
-        "atlikusiSumma": atlikusi_summa,
+        "atlikusiSumma": plans.atlikusi_summa,
         "progresaProcenti": progresa_procenti,
-        "redzamieProgresaProcenti": redzamie_progresa_procenti,
+        "redzamieProgresaProcenti": plans.redzamie_progresa_procenti,
         "nepieciesamaIkmenesaIemaksa": nepieciesama_ikmenesa_iemaksa,
         "statusaUzraksts": statusa_uzraksts,
         "statusaTonis": statusa_tonis,
