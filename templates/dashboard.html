@@ -196,6 +196,53 @@
                     Pievieno īsu piezīmi, ja gribi sev atgādināt, kāpēc šis mērķis ir svarīgs.
                 </div>
             </article>
+
+            <article class="panel-card currency-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Valūta</p>
+                        <h2>Atlikums citā valūtā</h2>
+                    </div>
+                    <span class="soft-label">ECB kurss</span>
+                </div>
+
+                <p class="subtle-copy">
+                    Izvēlies valūtu, lai redzētu, cik tavs pašreizējais atlikums ir vērts ārpus EUR zonas.
+                    Dati nāk no Frankfurter API (Eiropas Centrālās bankas kursi).
+                </p>
+
+                <div class="currency-controls">
+                    <label>
+                        Mērķa valūta
+                        <select id="currencySelect">
+                            <option value="USD">USD — ASV dolārs</option>
+                            <option value="GBP">GBP — Britu mārciņa</option>
+                            <option value="SEK">SEK — Zviedru krona</option>
+                            <option value="NOK">NOK — Norvēģu krona</option>
+                            <option value="CHF">CHF — Šveices franks</option>
+                            <option value="PLN">PLN — Polijas zlots</option>
+                        </select>
+                    </label>
+                    <button id="currencyConvertButton" class="secondary-button" type="button">Pārrēķināt</button>
+                </div>
+
+                <p id="currencyResult" class="insight">Izvēlies valūtu un nospied “Pārrēķināt”.</p>
+            </article>
+
+            <article class="panel-card export-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Dati</p>
+                        <h2>Eksports</h2>
+                    </div>
+                </div>
+
+                <p class="subtle-copy">
+                    Saglabā savu pašreizējo plānu kā CSV failu (piemēram, lai pievienotu atskaitei vai Excel tabulai).
+                </p>
+
+                <a class="secondary-button" href="/panelis/eksports.csv" download>Lejupielādēt CSV</a>
+            </article>
         </section>
     </div>
 

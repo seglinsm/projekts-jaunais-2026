@@ -1,7 +1,9 @@
+import csv
+import io
 import os
 from functools import wraps
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
 from database import (
     NOKLUSETA_DATUBAZE,
@@ -19,6 +21,7 @@ from services import (
     registret_lietotaju,
     saglabat_krajsanas_planu,
 )
+from valutas_serviss import ATLAUTAS_VALUTAS, ValutasKluda, konvertet_summu
 
 
 def _novirzit_ar_pazinojumu(marsruts, pazinojums, limenis="success", **vertibas):
@@ -156,6 +159,64 @@ def _registreet_marsrutus(lietotne):
                 "lietotajvards": lietotajs["lietotajvards"],
             }
         )
+
+    @lietotne.get("/api/valuta")
+    @_ieeja_nepieciesama
+    def api_valuta():
+        no_valutas = request.args.get("no", "EUR")
+        uz_valutu = request.args.get("uz", "USD")
+        summa_teksts = request.args.get("summa", "0")
+
+        try:
+            summa = float(summa_teksts)
+        except ValueError:
+            return (
+                jsonify({"statuss": "error", "pazinojums": "Ievadi derīgu summu."}),
+                400,
+            )
+
+        try:
+            konvertets = konvertet_summu(summa, no_valutas, uz_valutu)
+        except ValutasKluda as kluda:
+            return (
+                jsonify({"statuss": "error", "pazinojums": str(kluda)}),
+                502,
+            )
+
+        return jsonify(
+            {
+                "statuss": "ok",
+                "no": no_valutas.upper(),
+                "uz": uz_valutu.upper(),
+                "summa": summa,
+                "konvertets": konvertets,
+                "atlautasValutas": list(ATLAUTAS_VALUTAS),
+            }
+        )
+
+    @lietotne.get("/panelis/eksports.csv")
+    @_ieeja_nepieciesama
+    def eksportet_csv():
+        panela_dati = iegut_panela_datus(iegut_datubazi(), session["lietotaja_id"])
+        lietotajs = iegut_lietotaju_pec_id(iegut_datubazi(), session["lietotaja_id"])
+
+        buferis = io.StringIO()
+        rakstitajs = csv.writer(buferis, delimiter=";")
+        rakstitajs.writerow(["Lauks", "Vērtība"])
+        rakstitajs.writerow(["Lietotājvārds", lietotajs["lietotajvards"]])
+        rakstitajs.writerow(["Mērķa nosaukums", panela_dati["merkaNosaukums"]])
+        rakstitajs.writerow(["Mērķa summa (EUR)", panela_dati["merkaSumma"]])
+        rakstitajs.writerow(["Pašreizējais atlikums (EUR)", panela_dati["pasreizejaisAtlikums"]])
+        rakstitajs.writerow(["Atlikusī summa (EUR)", panela_dati["atlikusiSumma"]])
+        rakstitajs.writerow(["Progress (%)", panela_dati["progresaProcenti"]])
+        rakstitajs.writerow(["Ikmēneša iemaksa (EUR)", panela_dati["ikmenesaIemaksa"]])
+        rakstitajs.writerow(["Mērķa datums", panela_dati["merkaDatums"] or ""])
+        rakstitajs.writerow(["Statuss", panela_dati["statusaUzraksts"]])
+        rakstitajs.writerow(["Piezīme", panela_dati["piezime"]])
+
+        atbilde = Response(buferis.getvalue(), mimetype="text/csv; charset=utf-8")
+        atbilde.headers["Content-Disposition"] = "attachment; filename=krajsanas_plans.csv"
+        return atbilde
 
     @lietotne.get("/veseliba")
     def veseliba():
