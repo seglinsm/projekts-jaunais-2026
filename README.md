@@ -1,5 +1,7 @@
 ## Kā palaist? Caur CMD vai PowerShell
-# Jābūt vismaz python 3.11 vai jaunākam.
+# Jābūt vismaz python 3.11 vai jaunākam. -
+
+## Komandas, ko secīgi ievadīt failā - 
 
 1)git clone https://github.com/seglinsm/projekts-jaunais-2026.git
 
